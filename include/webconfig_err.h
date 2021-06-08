@@ -48,37 +48,37 @@
 #define BLOB_EXEC_FAILURE                       321
 
 
-#define SYSCFG_FAILURE            	    	1001
-#define SYSEVENT_FAILURE            		1002
-#define MSG_QUEUE_POST_FAILURE          	1003
+#define SYSCFG_FAILURE            	    	601
+#define SYSEVENT_FAILURE            		602
+#define MSG_QUEUE_POST_FAILURE          	603
 
-#define WIFI_HAL_FAILURE                	2001
-#define WIFI_AP_ENABLE_HAL_FAILURE      	2002
+#define WIFI_HAL_FAILURE                	651
+#define WIFI_AP_ENABLE_HAL_FAILURE      	652
 
-#define ADVSEC_FAILURE                  	3001
-#define MOCA_HAL_FAILURE                	5001
+#define ADVSEC_FAILURE                  	701
+#define MOCA_HAL_FAILURE                	720
 
-#define TELE_BLOB_PROCESSES_FAILURE     	4001
-#define TELE_BLOB_SAVE_FAILURE          	4002
+#define TELE_BLOB_PROCESSES_FAILURE     	750
+#define TELE_BLOB_SAVE_FAILURE          	751
 
-#define INVALID_DMZ_WAN_IP              	6001
+#define INVALID_DMZ_WAN_IP              	790
 
-#define MB_ERROR_PRECONDITION_FAILED            8001
-#define MB_ERROR_BRIDGE_MODE_ENABLED            8002
-#define MB_ERROR_RADIO_OFF                      8003
-#define MB_ERROR_BANDSTEERING_ENABLED           8004
-#define MB_ERROR_MESH_SERVICE_START_FAIL        8005
-#define MB_ERROR_MESH_SERVICE_STOP_FAIL         8006
+#define MB_ERROR_PRECONDITION_FAILED            801
+#define MB_ERROR_BRIDGE_MODE_ENABLED            802
+#define MB_ERROR_RADIO_OFF                      803
+#define MB_ERROR_BANDSTEERING_ENABLED           804
+#define MB_ERROR_MESH_SERVICE_START_FAIL        805
+#define MB_ERROR_MESH_SERVICE_STOP_FAIL         806
 
 
 // multi comp error codes
 #ifdef WBCFG_MULTI_COMP_SUPPORT
 
-#define SLAVE_RESPONSE_TIME_OUT 	    	800
-#define SLAVE_EXEC_TIME_OUT			801
+#define SLAVE_RESPONSE_TIME_OUT 	    	850
+#define SLAVE_EXEC_TIME_OUT			851
 
-#define SLAVE_EXEC_FAILED			802
-#define SLAVE_NOT_READY          803
+#define SLAVE_EXEC_FAILED			852
+#define SLAVE_NOT_READY          853
 
 #define POST_EXEC_SUCCESS              0
 #endif
