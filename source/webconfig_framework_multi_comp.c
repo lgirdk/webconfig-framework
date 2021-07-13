@@ -1,5 +1,5 @@
 /*
- * If not stated otherwise in this file or this component's Licenses.txt file the
+ * If not stated otherwise in this file or this component's LICENSE file the
  * following copyright and licenses apply:
  *
  * Copyright 2015 RDK Management
@@ -1240,7 +1240,6 @@ void* ExecuteMultiCompRequest_thread(void* arg)
                   strncpy(subdocInExec, token,sizeof(subdocInExec)-1);
                 }
 
-                // TODO : need to discuss this , using the lock in rollback and getTimeout as well. Need to see how efficiently we can use the lock
                 pthread_mutex_lock(&multiRegData_access);
 
                 lmultiCompRegData = multiCompSubDocInfo;
@@ -1490,7 +1489,6 @@ void* messageQueueProcessingMultiCompSlave()
 
                     strncpy(subdocInExec, token,sizeof(subdocInExec)-1);
 
-                    // TODO : need to discuss this , using the lock in rollback and getTimeout as well. Need to see how efficiently we can use the lock
                     pthread_mutex_lock(&multiRegData_access);
 
                   lmultiCompRegData = multiCompSubDocInfo;
@@ -1526,7 +1524,6 @@ void* messageQueueProcessingMultiCompSlave()
                                 pthread_cancel(tid);
 
                                 sendBlobExecutionResult(subdocInExec,EXECUTION_FAILED,BLOB_EXECUTION_TIMEDOUT,"blob execution timedout");  
-                                // TODO : Need to discuss lock, it is not unlocked from thread in timeout
 
                           //pthread_mutex_lock(&multiRegData_access);
 
@@ -1850,7 +1847,6 @@ void* messageQueueProcessingMultiComp()
 
             		memset(subdocInExec,0,sizeof(subdocInExec));
             		strncpy(subdocInExec,exec_data->subdoc_name,sizeof(subdocInExec)-1); 
-// TODO : make subscribe blocking
 
                  EventRegister(MASTER_COMP_SIGNAL_NAME);
 
@@ -1983,7 +1979,6 @@ void* messageQueueProcessingMultiComp()
                           		strncpy(mCompExecState->componentName,process_name,sizeof(mCompExecState->componentName));
                           
                           		pthread_mutex_lock(&MultiCompMutex);
-                          		// TODO : calcTimeout func parameter in case of masterComp timeout
                           		int masterTimeout = exec_data->calcTimeout(1) ;
 
                           		totalTimeout += masterTimeout ; 
@@ -2220,7 +2215,6 @@ ROLLBACK:
                       		else
                       		{     
 
-                        		// TODO : need to discuss this lock
                             		pthread_mutex_unlock(&multiCompState_access);
                             		sendSignaltoRollBack(mCompExecState->componentName,subdocInExec);
                             		pthread_mutex_lock(&multiCompState_access);

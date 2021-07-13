@@ -1,5 +1,5 @@
 /*
- * If not stated otherwise in this file or this component's Licenses.txt file the
+ * If not stated otherwise in this file or this component's LICENSE file the
  * following copyright and licenses apply:
  *
  * Copyright 2015 RDK Management
@@ -916,7 +916,6 @@ void* messageQueueProcessing()
 	pthread_condattr_setclock(&webconfig_attr, CLOCK_MONOTONIC);
 	pthread_cond_init(&webconfig_exec_completed, &webconfig_attr);
 
-	// TODO check if pthread_cond_init needs to be done everytime event is received , also check if pthread_cond_destroy is required
     	while(1)
     	{
 
