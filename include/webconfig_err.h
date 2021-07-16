@@ -83,5 +83,6 @@
 #define POST_EXEC_SUCCESS              0
 #endif
 
+#define TR104_HAL_FAILURE                       950
 
 #endif /* _WEBCONFIG_ERROR_API_H */

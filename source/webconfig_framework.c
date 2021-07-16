@@ -1159,7 +1159,7 @@ int checkIfVersionExecInQueue(uint32_t version,int *queueIndex)
 
   	if (isQueueEmpty())
   	{
-  		WbError(("%s : Queue Empty\n",__FUNCTION__));
+  		WbInfo(("%s : Queue Empty\n",__FUNCTION__));
 		pthread_mutex_unlock(&queue_access);
 
   	  	return VERSION_UPDATE_REQUIRED ; 
