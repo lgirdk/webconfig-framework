@@ -10,6 +10,7 @@ int gBroadcastSubscribed = 0;
 int gMasterSubscribed = 0;
 int gSlaveSubscribed = 0;
 
+extern int slaveExecutionCount ;
 rbusDataElement_t dataElements_slave[1] = {
                             {MASTER_COMP_SIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandler, NULL}}
                         };
@@ -152,6 +153,12 @@ rbusError_t eventSubHandler(rbusHandle_t handle, rbusEventSubAction_t action, co
     	else if(!strcmp(MASTER_COMP_SIGNAL_NAME, eventName))
     	{
         	gMasterSubscribed = action == RBUS_EVENT_ACTION_SUBSCRIBE ? 1 : 0;
+
+          if (gMasterSubscribed == 0 &&  slaveExecutionCount == 0 ) 
+          {
+                WbInfo(("%s unsubscribed: slaveExecutionCount is 0 , unregistering event\n", MASTER_COMP_SIGNAL_NAME));
+                UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
+          }
     	}
     	else if(!strcmp(SLAVE_COMP_SIGNAL_NAME, eventName))
     	{

@@ -421,9 +421,15 @@ void rollbackLastExec(char* subdoc_name)
     	// Unreg slave signal if count is zero
    	if ( slaveExecutionCount == 0 )
     	{
-          UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
-          UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
-
+        	if ( 1 == isWebCfgRbusEnabled() )
+          	{
+              		UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
+              		// For RBUS unreg is called from eventSubHandler callback
+          	}
+          	else
+          	{
+              		UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
+          	}
     	}
       	return ;
 }
@@ -521,8 +527,15 @@ void sendBlobExecutionResult(char* subdoc_name, int exec_status, int execRet, ch
       	// Unreg slave signal if count is zero
       	if ( slaveExecutionCount == 0 )
       	{
-        	UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
-          	UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
+        	if ( 1 == isWebCfgRbusEnabled() )
+            	{
+                	UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
+                	// For RBUS unreg is called from eventSubHandler callback
+            	}
+            	else
+            	{
+                	UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
+            	}
       	}
 }
 
@@ -2240,11 +2253,10 @@ ROLLBACK:
         }
         pthread_mutex_unlock(&multiCompState_access);
         WbInfo((" Rollback complete\n"));
+        UnSubscribeFromEvent(MASTER_COMP_SIGNAL_NAME);
 
 //  Unreg from master communication event and free all the allocated memories. 
 EXIT:
-
-        UnSubscribeFromEvent(MASTER_COMP_SIGNAL_NAME);
         UnregisterFromEvent(MASTER_COMP_SIGNAL_NAME);
         pthread_mutex_lock(&multiCompState_access);
         gNumOfComponents = 0;
