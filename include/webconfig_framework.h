@@ -167,7 +167,7 @@ typedef struct
 _Error_   
 {
 	uint16_t ErrorCode;
-        char ErrorMsg[64] ;
+        char ErrorMsg[128] ;
 }Err,*pErr;
 
 #ifdef WBCFG_MULTI_COMP_SUPPORT
