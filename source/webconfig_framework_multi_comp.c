@@ -80,7 +80,6 @@ multiCompSubDocReg *multiCompSubDocInfo;
 
 int slaveExecutionCount = 0;
 
-
 void* gMasterExecData = NULL ;
 MultiComp_ExecInfo  *gMultiCompDataAddress = NULL;
 
@@ -1745,7 +1744,7 @@ void* messageQueueProcessingMultiComp()
 
       	pthread_t tid;
       	int err, pthreadRetValue,rollbkRet;
-
+        int needEventUnSubscribe ;
       	mqd_t mq;
       	struct mq_attr attr;
       	char buffer[MAX_SIZE + 1];
@@ -1791,7 +1790,7 @@ void* messageQueueProcessingMultiComp()
            	j = 0;
         	ssize_t bytes_read;
         	gMasterExecData = NULL , gMultiCompDataAddress = NULL ;
-          slaveSubscribeTimeCounter = 0 , gReadyToReceive = 0;
+          slaveSubscribeTimeCounter = 0 , gReadyToReceive = 0 , needEventUnSubscribe = 0;
         	/* receive the message */
         	bytes_read = mq_receive(mq, buffer, MAX_SIZE, NULL);
 
@@ -1883,6 +1882,7 @@ void* messageQueueProcessingMultiComp()
                                       		slaveSubscribeTimeCounter +=5;
                                       		sleep(5);
                                 	}
+                                    needEventUnSubscribe = 1 ;
                     			pthread_mutex_lock(&MultiCompMutex);
                     			memset(&abs_time, 0, sizeof(abs_time));
                     			clock_gettime(CLOCK_MONOTONIC, &abs_time);
@@ -1973,6 +1973,7 @@ void* messageQueueProcessingMultiComp()
                           		}        
                                 
                                 	UnSubscribeFromEvent(MASTER_COMP_SIGNAL_NAME);
+                                    needEventUnSubscribe = 0 ;
                       		}
                       		else
                       		{
@@ -2011,9 +2012,9 @@ void* messageQueueProcessingMultiComp()
                                         				if (rollbkRet != ROLLBACK_SUCCESS )
                                                     				WbError(("%s : Rolling back of master comp data failed\n",__FUNCTION__));
 
-                                              				pthread_mutex_unlock(&MultiCompMutex);
-                                        				goto ROLLBACK;
                                       				}
+                                                    pthread_mutex_unlock(&MultiCompMutex);
+                                                    goto ROLLBACK;
                                     			}			
                                 		}
                                 		else if ( 0 == pthreadRetValue && sequenceData->isExecInSequenceNeeded )
@@ -2057,9 +2058,9 @@ void* messageQueueProcessingMultiComp()
                                                 				if (rollbkRet != ROLLBACK_SUCCESS )
                                                     					WbError(("%s : Rolling back of master comp data failed\n",__FUNCTION__));
                                                 
-                                                				pthread_mutex_unlock(&MultiCompMutex);
-                                                				goto ROLLBACK;
                                            				}
+                                                        pthread_mutex_unlock(&MultiCompMutex);
+                                                        goto ROLLBACK;
                                       				}
                                     			}
                                   		} 
@@ -2247,7 +2248,10 @@ ROLLBACK:
         }
         pthread_mutex_unlock(&multiCompState_access);
         WbInfo((" Rollback complete\n"));
-        UnSubscribeFromEvent(MASTER_COMP_SIGNAL_NAME);
+        if (needEventUnSubscribe)
+        {
+            UnSubscribeFromEvent(MASTER_COMP_SIGNAL_NAME);
+        }
 
 //  Unreg from master communication event and free all the allocated memories. 
 EXIT:
