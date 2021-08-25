@@ -64,7 +64,6 @@ extern ANSC_HANDLE bus_handle;
 #define ROLLBACK_LAST_REQUEST			0x000000FF
 
 #define MAX_RESPONSE_TIME      			150  // max wait time for slave slave comp response in seconds
-#define MAX_DATA_SIZE_TO_SLAVE  		20480
 
 #define WEBCONFIG_QUEUE_NAME_MULTI_COMP 	"/webconfig_queue_mComp"
 

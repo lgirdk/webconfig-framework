@@ -541,47 +541,66 @@ void sendBlobExecutionResult(char* subdoc_name, int exec_status, int execRet, ch
 // Function to parse the data received from slave event
 void parseSlaveData(const char* info)
 {
-        char *str = NULL;
-        int data_sz = (sizeof(char) * MAX_DATA_SIZE_TO_SLAVE ) ;
+        WbInfo(("Entering %s\n",__FUNCTION__));
 
-        str = malloc(data_sz);
+        int data_sz = 0 ;
 
-        memset(str,0,data_sz);
-        snprintf(str,data_sz,"%s",info);
+        char* dataReceivedFromEvent = NULL ;
+        dataReceivedFromEvent = strdup(info);
 
-        char* rest = str;
+        if ( dataReceivedFromEvent == NULL )
+        {
+            WbError(("%s : strdup failed\n",__FUNCTION__));
+            return ; 
+        }
+
+        char* rest = dataReceivedFromEvent;
         char *token[64];
         char *dataToQueue = NULL;
 
         int thread_retVal = 0;
-        int i=-1, count=0 ;
+        int index=-1, count=0 ;
         pthread_t tid_exec_slave;
-        while ((token[++i] = strtok_r(rest, ",", &rest)) && count < 2 ) 
+        while ((token[++index] = strtok_r(rest, ",", &rest)) && count < 3 ) 
               count++;
     
-        i = 0 ; 
-        if ( strcmp(process_name,token[i]) == 0 )
+        index = 0 ; 
+        // Checking if request belongs to right component
+        if ( strcmp(process_name,token[index]) == 0 )
         {
-              i++;
-              if ( atoi(token[i]) ==  BLOB_EXEC_REQUEST_TIMEOUT )
-              {
-                  size_t timeout = getMultiCompTimeOut(token[++i]);
+              index++;
 
-                  sendTimeoutToMaster(token[i],timeout);
+              if ( atoi(token[index]) ==  BLOB_EXEC_REQUEST_TIMEOUT )
+              {
+                  size_t timeout = getMultiCompTimeOut(token[++index]);
+
+                  sendTimeoutToMaster(token[index],timeout);
                   goto EXIT;
               }
-              else if ( atoi(token[i]) ==  BLOB_EXEC_DATA )
+              else if ( atoi(token[index]) ==  BLOB_EXEC_DATA )
               {
+                
+                  index++;
+
+                  data_sz = atoi(token[index]) + 1 ;
+                  WbInfo(("%s : data_sz is %d \n",__FUNCTION__,data_sz));
+ 
                   dataToQueue = malloc(data_sz);
-                  memset(dataToQueue,0,data_sz);
-                  snprintf(dataToQueue,data_sz,"%s,%s",token[++i],rest);
 
-                  thread_retVal =pthread_create(&tid_exec_slave, NULL, ExecuteMultiCompRequest_thread,(void*)dataToQueue);
-
-                  if ( 0 == thread_retVal)
+                  if (dataToQueue)
                   {
-                      WbInfo(("%s : ExecuteMultiCompRequest_thread created successfully \n",__FUNCTION__));
+                      memset(dataToQueue,0,data_sz);
+                      // data with subdoc name
+                      snprintf(dataToQueue,data_sz,"%s,%s",token[++index],rest);
+
+                      thread_retVal =pthread_create(&tid_exec_slave, NULL, ExecuteMultiCompRequest_thread,(void*)dataToQueue);
+
+                      if ( 0 == thread_retVal)
+                      {
+                          WbInfo(("%s : ExecuteMultiCompRequest_thread created successfully \n",__FUNCTION__));
+                      }  
                   }
+
                   #if 0
                   mqd_t mq;
                   mq = mq_open(mCompMqSlaveName, O_WRONLY);
@@ -607,19 +626,23 @@ void parseSlaveData(const char* info)
                   goto EXIT;
                 }
 
-          	else if ( atoi(token[i]) ==  ROLLBACK_LAST_REQUEST )
+          	else if ( atoi(token[index]) ==  ROLLBACK_LAST_REQUEST )
                 {
-                  	rollbackLastExec(token[++i]);
+                  	rollbackLastExec(token[++index]);
                   	goto EXIT;
               	} 
       }
 
 EXIT :
-      if (str!=NULL)
+
+      if (dataReceivedFromEvent)
       {
-        free(str);
-        str = NULL;
+            WbInfo(("%s : Freeing dataReceivedFromEvent \n",__FUNCTION__));
+
+            free(dataReceivedFromEvent);
+            dataReceivedFromEvent = NULL ;
       }
+      WbInfo(("Exiting %s\n",__FUNCTION__));
       return ;
 }
 
@@ -956,16 +979,32 @@ size_t getMultiCompPendingQueueTimeout(uint16_t txid)
 //newly modified changes 
 void sendDataToSlaveComp(char* compName , char* subdoc_name, char*  blob)
 {
-      	WbInfo(("Entering %s, blob is %s\n\n",__FUNCTION__,blob));
+        WbInfo(("Entering %s \n",__FUNCTION__));
+        WbInfo(("%s : compName is %s , subdoc name is %s\n",__FUNCTION__,compName,subdoc_name));
 
 	    char *data = NULL;
-      int data_sz = (sizeof(char) * MAX_DATA_SIZE_TO_SLAVE ) ;
+      
+        char data_prefix[256] ;
+        memset(data_prefix,0,sizeof(data_prefix));
 
-      data = malloc (data_sz) ;
-      if (data)
-      {
+        size_t blob_sz = strlen(blob) ;
+
+        snprintf(data_prefix,sizeof(data_prefix),"%s,%d,%u,%s,",compName,BLOB_EXEC_DATA,strlen(subdoc_name)+blob_sz+1,subdoc_name);
+
+        size_t data_prefix_sz = strlen(data_prefix) ;
+
+        WbInfo(("%s : blob_sz is %u, data_prefix_sz %u , data_prefix is %s \n",__FUNCTION__,blob_sz,data_prefix_sz,data_prefix));
+
+        unsigned long data_sz = (sizeof(char) * (blob_sz + data_prefix_sz +1 )) ;
+
+        data = malloc (data_sz) ;
+        if (data)
+        {
           memset(data,0,data_sz);
-          snprintf(data,data_sz,"%s,%d,%s,",compName,BLOB_EXEC_DATA,subdoc_name);
+          snprintf(data,data_sz,"%s",data_prefix);
+          
+          WbInfo(("DEBUG : %s data is %s strlen of data is %u\n",__FUNCTION__,data,strlen(data)));
+          WbInfo(("DEBUG : %s wifi blob data pointer is  %p\n",__FUNCTION__,blob));
 
           memcpy(data+strlen(data),blob,data_sz-strlen(data)-1);
           WbInfo(("%s, Data to be sent is %s\n",__FUNCTION__,data));
@@ -1257,6 +1296,7 @@ void* ExecuteMultiCompRequest_thread(void* arg)
 
 
                 int timeout = getMultiCompTimeOut( subdocInExec );
+
                 pthreadRetValue=pthread_create(&tid, NULL, execute_request_slave,(void*)rest);
 
                 if ( 0 == pthreadRetValue )
@@ -1937,6 +1977,8 @@ void* messageQueueProcessingMultiComp()
                           		pthread_mutex_lock(&multiCompState_access);
                     			totalTimeout += mCompExecState->timeout ; 
                           		pthread_mutex_unlock(&multiCompState_access);
+                                CcspTraceWarning(("DEBUG : before sendDataToSlaveComp, wifi data pointer is %p\n",sequenceData->multiCompExecData->comp_exec_data));
+
                     			sendDataToSlaveComp(sequenceData->multiCompExecData->CompName,exec_data->subdoc_name,sequenceData->multiCompExecData->comp_exec_data);
 					
 					// If sequential execution is needed , wait for client reply that execution is completed , or wait till MAX timeout.
