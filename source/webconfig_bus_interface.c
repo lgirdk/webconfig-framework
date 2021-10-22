@@ -562,6 +562,7 @@ void sendWebConfigSignal(char* data)
 	int ret = -1 ;
         if ( 1 == isWebCfgRbusEnabled() )
       	{
+		#ifndef WEBCONFIG_BIN_SUPPORT
         	rbusMessage request, response;
           	rbusMessage_Init(&request);
           	rbusMessage_SetString(request,data);
@@ -574,7 +575,22 @@ void sendWebConfigSignal(char* data)
           	{
               		rbusMessage_Release(response);
           	}
+		#else
+		WbInfo(("%s : rbus_set :: event_name : %s :: \n", __FUNCTION__, "webconfigSignal"));
+		bool isCommit = true;
+		int sessionId = 0;
+		rbusValue_t setVal;
+		rbusValue_Init(&setVal);
+		rbusValue_SetFromString(setVal, RBUS_STRING, data);
 
+		rbusSetOptions_t opts = {isCommit,sessionId};
+		ret = rbus_set(bus_handle_rbus, "webconfigSignal", setVal, &opts);
+		if(RBUS_ERROR_SUCCESS != ret)
+		{
+			WbError(("%s rbus_set for webconfigSignal failed & returns with Err: %d\n", __FUNCTION__, ret));
+		}
+		rbusValue_Release(setVal);
+		#endif
         }
         else
         {
