@@ -363,7 +363,7 @@ void sendTimeoutToMaster(char* subdoc_name,size_t timeout)
 	char data[256] = {0};
   memset(data,0,sizeof(data));
 
-    	snprintf(data,sizeof(data),"%s,%s,%d,%u",process_name,subdoc_name,TIMEOUT_VALUE,timeout);
+       snprintf(data,sizeof(data),"%s,%s,%d,%lu",process_name,subdoc_name,TIMEOUT_VALUE,(ULONG)timeout);
 
       sendDataToEvent(MASTER_COMP_SIGNAL_NAME,data);
 }
@@ -992,11 +992,11 @@ void sendDataToSlaveComp(char* compName , char* subdoc_name, char*  blob)
 
         size_t blob_sz = strlen(blob) ;
 
-        snprintf(data_prefix,sizeof(data_prefix),"%s,%d,%u,%s,",compName,BLOB_EXEC_DATA,strlen(subdoc_name)+blob_sz+1,subdoc_name);
+        snprintf(data_prefix,sizeof(data_prefix),"%s,%d,%lu,%s,",compName,BLOB_EXEC_DATA,(ULONG)strlen(subdoc_name)+blob_sz+1,subdoc_name);
 
         size_t data_prefix_sz = strlen(data_prefix) ;
 
-        WbInfo(("%s : blob_sz is %u, data_prefix_sz %u , data_prefix is %s \n",__FUNCTION__,blob_sz,data_prefix_sz,data_prefix));
+        WbInfo(("%s : blob_sz is %zu, data_prefix_sz %zu , data_prefix is %s \n",__FUNCTION__,blob_sz,data_prefix_sz,data_prefix));
 
         unsigned long data_sz = (sizeof(char) * (blob_sz + data_prefix_sz +1 )) ;
 
@@ -1006,7 +1006,7 @@ void sendDataToSlaveComp(char* compName , char* subdoc_name, char*  blob)
           memset(data,0,data_sz);
           snprintf(data,data_sz,"%s",data_prefix);
           
-          WbInfo(("DEBUG : %s data is %s strlen of data is %u\n",__FUNCTION__,data,strlen(data)));
+          WbInfo(("DEBUG : %s data is %s strlen of data is %zu\n",__FUNCTION__,data,strlen(data)));
           WbInfo(("DEBUG : %s wifi blob data pointer is  %p\n",__FUNCTION__,blob));
 
           memcpy(data+strlen(data),blob,data_sz-strlen(data)-1);
@@ -2510,7 +2510,7 @@ void register_MultiComp_subdoc_handler(multiCompSubDocReg *mCompReg,int NumOfMCo
 void PushMultiCompBlobRequest (execData *exec_data )
 {
 
-	WbError(("%s : subdoc_name %s , txid %hu, version %u , entries %u\n",__FUNCTION__,exec_data->subdoc_name,exec_data->txid,exec_data->version,exec_data->numOfEntries));
+	WbError(("%s : subdoc_name %s , txid %hu, version %u , entries %zu\n",__FUNCTION__,exec_data->subdoc_name,exec_data->txid,exec_data->version,exec_data->numOfEntries));
   	unsigned long timeout = 0;
   	unsigned long timeout_to_webconfig = 0 ;
     int queueIndex=0;

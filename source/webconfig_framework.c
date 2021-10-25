@@ -136,10 +136,10 @@ void* display_subDocs()
 			  	{
 			  		for( i = queueData.front; i!=queueData.rear; i=(i+1)%QUEUE_SIZE) 
 				    {
-				  		  WbInfo(("TXID %hu version %u timeout %u state %d \n",queueData.txid_queue[i],queueData.version_queue[i],queueData.timeout_queue[i],queueData.blob_state_queue[i]));
+				  		  WbInfo(("TXID %hu version %u timeout %zu state %d \n",queueData.txid_queue[i],queueData.version_queue[i],queueData.timeout_queue[i],queueData.blob_state_queue[i]));
 
 				    }
-				    WbInfo(("TXID %hu version %u timeout %u state %d \n",queueData.txid_queue[i],queueData.version_queue[i],queueData.timeout_queue[i],queueData.blob_state_queue[i]));
+				    WbInfo(("TXID %hu version %u timeout %zu state %d \n",queueData.txid_queue[i],queueData.version_queue[i],queueData.timeout_queue[i],queueData.blob_state_queue[i]));
 
 
 			  	}
@@ -160,10 +160,10 @@ void* display_subDocs()
 			  	{
 			  		for( i = mCompQueueData.front; i!=mCompQueueData.rear; i=(i+1)%QUEUE_SIZE) 
 				    {
-				  		  WbInfo(("MultiComp TXID %hu version %u timeout %u state %d \n",mCompQueueData.txid_queue[i],mCompQueueData.version_queue[i],mCompQueueData.timeout_queue[i],mCompQueueData.blob_state_queue[i]));
+				  		  WbInfo(("MultiComp TXID %hu version %u timeout %zu state %d \n",mCompQueueData.txid_queue[i],mCompQueueData.version_queue[i],mCompQueueData.timeout_queue[i],mCompQueueData.blob_state_queue[i]));
 
 				    }
-				    WbInfo(("MultiComp %hu version %u timeout %u state %d \n",mCompQueueData.txid_queue[i],mCompQueueData.version_queue[i],mCompQueueData.timeout_queue[i],mCompQueueData.blob_state_queue[i]));
+				    WbInfo(("MultiComp %hu version %u timeout %zu state %d \n",mCompQueueData.txid_queue[i],mCompQueueData.version_queue[i],mCompQueueData.timeout_queue[i],mCompQueueData.blob_state_queue[i]));
 
 
 			  	}
@@ -1367,7 +1367,7 @@ size_t getPendingQueueTimeout(uint16_t txid)
 void PushBlobRequest (execData *exec_data )  
 {
 
-	WbInfo(("%s : subdoc_name %s , txid %hu, version %u , entries %u\n",__FUNCTION__,exec_data->subdoc_name,exec_data->txid,exec_data->version,exec_data->numOfEntries));
+	WbInfo(("%s : subdoc_name %s , txid %hu, version %u , entries %zu\n",__FUNCTION__,exec_data->subdoc_name,exec_data->txid,exec_data->version,exec_data->numOfEntries));
 
 	unsigned long timeout = 0;
 	unsigned long timeout_to_webconfig = 0 ;
