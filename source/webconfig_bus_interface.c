@@ -533,7 +533,7 @@ int subscribeToEvent(char* EventName)
             		strncpy(user_data,"broadcastSignal",sizeof(user_data)-1);
         	}
 
-        	ret = rbusEvent_Subscribe(bus_handle_rbus, EventName, multiComp_callbk_rbus, user_data,0);
+        	ret = rbusEvent_Subscribe(bus_handle_rbus, EventName, multiComp_callbk_rbus, user_data, 60);
         	if(ret != RBUS_ERROR_SUCCESS) {
             		WbError(("Unable to subscribe to event %s with rbus error code : %d\n", EventName, ret));
         	} 
