@@ -103,7 +103,10 @@ void* event_register_slave(void* subdoc_name)
         {
             sleep(2);
             counter += 2 ;
-            if ( counter > MAX_RESPONSE_TIME )
+
+            // Waiting for MAX_RESPONSE_TIME/3 times, if we don't receive subscription notification send data to master component
+            // If master component receives data , then it will send the blob data otherwise it will rollback and send NACK to webconfig client
+            if ( counter > (MAX_RESPONSE_TIME/3) )
             {
                 WbInfo(("master failed to subscribe to %s\n",MASTER_COMP_SIGNAL_NAME));
                 break;
@@ -2540,7 +2543,7 @@ void PushMultiCompBlobRequest (execData *exec_data )
       			exec_data->calcTimeout = defFunc_calculateTimeout;
     		}
       		timeout = exec_data->calcTimeout(exec_data->numOfEntries);
-          	timeout = timeout * MAX_FUNC_EXEC_TIMEOUT ;
+          	timeout = timeout + MAX_RESPONSE_TIME ;
 
       		WbError(("%s timeout received from calcTimeout is %lu\n",__FUNCTION__,timeout));
       		timeout_to_webconfig = timeout + (getPendingQueueTimeout(exec_data->txid)) + (getMultiCompPendingQueueTimeout(exec_data->txid)) ;
@@ -2584,8 +2587,8 @@ void PushMultiCompBlobRequest (execData *exec_data )
       			exec_data->calcTimeout = defFunc_calculateTimeout;
     		}
     		timeout = exec_data->calcTimeout(exec_data->numOfEntries);
-        // for multi-comp request sending timeout*3 for webconfig 
-        timeout = timeout * MAX_FUNC_EXEC_TIMEOUT ;
+            	// for multi-comp request sending timeout of master + MAX_RESPONSE_TIME since slave component timeout is not yet received
+            	timeout = timeout + MAX_RESPONSE_TIME ;
     		WbInfo(("%s timeout received from calcTimeout is %lu\n",__FUNCTION__,timeout));
     		timeout_to_webconfig = timeout + (getPendingQueueTimeout(exec_data->txid)) + (getMultiCompPendingQueueTimeout(exec_data->txid)) ;
     		WbInfo(("%s : Send received request ACK , timeout is %lu\n",__FUNCTION__,timeout_to_webconfig));
