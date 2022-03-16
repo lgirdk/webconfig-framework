@@ -363,7 +363,7 @@ void sendTimeoutToMaster(char* subdoc_name,size_t timeout)
 	char data[256] = {0};
   memset(data,0,sizeof(data));
 
-       snprintf(data,sizeof(data),"%s,%s,%d,%lu",process_name,subdoc_name,TIMEOUT_VALUE,(ULONG)timeout);
+       snprintf(data,sizeof(data),"%s,%s,%d,%lu",process_name,subdoc_name,TIMEOUT_VALUE,(unsigned long)timeout);
 
       sendDataToEvent(MASTER_COMP_SIGNAL_NAME,data);
 }
@@ -992,7 +992,7 @@ void sendDataToSlaveComp(char* compName , char* subdoc_name, char*  blob)
 
         size_t blob_sz = strlen(blob) ;
 
-        snprintf(data_prefix,sizeof(data_prefix),"%s,%d,%lu,%s,",compName,BLOB_EXEC_DATA,(ULONG)strlen(subdoc_name)+blob_sz+1,subdoc_name);
+        snprintf(data_prefix,sizeof(data_prefix),"%s,%d,%lu,%s,",compName,BLOB_EXEC_DATA,(unsigned long)strlen(subdoc_name)+blob_sz+1,subdoc_name);
 
         size_t data_prefix_sz = strlen(data_prefix) ;
 
