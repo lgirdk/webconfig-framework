@@ -17,6 +17,7 @@
  * limitations under the License.
 */
 
+#include <fcntl.h>
 
 #include "webconfig_framework.h"
 #include "webconfig_bus_interface.h"

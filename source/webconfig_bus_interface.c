@@ -226,7 +226,6 @@ void*  event_subscribe_bcast(void* arg)
 
 void eventRegisterSlave()
 {
-	int ret = 0;
   	WbInfo(("Entering %s\n", __FUNCTION__));
   	if ( 1 == isWebCfgRbusEnabled() )
   	{
@@ -239,6 +238,7 @@ void eventRegisterSlave()
   	{
 
         	#if defined(CCSP_SUPPORT_ENABLED)
+            int ret = 0;
           	CcspBaseIf_SetCallback2(bus_handle, BROADCASTSIGNAL_NAME,
                      	multiCompBroadCastSignal_callbk, NULL);
 
@@ -321,7 +321,6 @@ void eventRegisterMaster()
 void sendDataToEvent(char* event_name , char* eventData)
 {
 	 WbInfo(("%s : Event name is %s Data is %s , gRbusEnabled is %d\n", __FUNCTION__,event_name,eventData,gRbusEnabled));
-    	int ret = 0;
     	if ( gRbusEnabled == 1 )
     	{
             	rbusEvent_t event;
@@ -349,6 +348,7 @@ void sendDataToEvent(char* event_name , char* eventData)
     	{
         	#if defined(CCSP_SUPPORT_ENABLED)
             	WbInfo(("%s : calling CcspBaseIf_SendSignal_WithData,event_name is %s\n", __FUNCTION__,event_name));
+                int ret = 0;
 
             	ret = CcspBaseIf_SendSignal_WithData(bus_handle,event_name,eventData);
 
@@ -413,7 +413,7 @@ void EventRegister(char* EventName)
               	WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
         	#endif
     	}
-    	WbInfo(("Exiting from %s\n", __FUNCTION__));
+        WbInfo(("Exiting from %s and return value is %d\n", __FUNCTION__,ret));
 	return;
 }
 
@@ -495,7 +495,7 @@ void UnregisterFromEvent(char* EventName)
               	#endif
           }
 
-    	WbInfo(("Exiting from %s\n", __FUNCTION__));
+          WbInfo(("Exiting from %s and return value is %d\n", __FUNCTION__,ret));
     	return ;
 }
 

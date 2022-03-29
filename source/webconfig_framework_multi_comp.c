@@ -17,7 +17,7 @@
  * limitations under the License.
 */
 
-
+#include <fcntl.h>
 
 #ifdef WBCFG_MULTI_COMP_SUPPORT
 #include "webconfig_framework.h"
@@ -1980,7 +1980,7 @@ void* messageQueueProcessingMultiComp()
                           		pthread_mutex_lock(&multiCompState_access);
                     			totalTimeout += mCompExecState->timeout ; 
                           		pthread_mutex_unlock(&multiCompState_access);
-                                CcspTraceWarning(("DEBUG : before sendDataToSlaveComp, wifi data pointer is %p\n",sequenceData->multiCompExecData->comp_exec_data));
+                                WbWarning(("DEBUG : before sendDataToSlaveComp, wifi data pointer is %p\n",sequenceData->multiCompExecData->comp_exec_data));
 
                     			sendDataToSlaveComp(sequenceData->multiCompExecData->CompName,exec_data->subdoc_name,sequenceData->multiCompExecData->comp_exec_data);
 					
