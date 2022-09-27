@@ -27,6 +27,16 @@
 #define WbError    CcspTraceError
 #define WbWarning  CcspTraceWarning  
 
+#elif defined(ENABLE_RDKC_SUPPORT)
+#include <cimplog.h>
+
+#define LOGGING_MODULE                      "WEBCONFIG"
+#define EXTRACT_ARGS(msg ...) msg
+
+#define WbError(msg)        cimplog_error(LOGGING_MODULE, EXTRACT_ARGS msg)
+#define WbInfo(msg)         cimplog_info(LOGGING_MODULE, EXTRACT_ARGS msg)
+#define WbWarning(msg)      cimplog_info(LOGGING_MODULE, EXTRACT_ARGS msg)
+
 #else
 
 #include<stdio.h>

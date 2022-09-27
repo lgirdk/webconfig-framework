@@ -98,6 +98,13 @@ if [ "$XCAM_MODEL" == "SCHC2" ]; then
   export PKG_CONFIG_PATH="$RDK_PROJECT_ROOT_PATH/opensource/lib/pkgconfig/:$RDK_FSROOT_PATH/img/fs/shadow_root/usr/local/lib/pkgconfig/:$RDK_TOOLCHAIN_PATH/lib/pkgconfig/:$PKG_CONFIG_PATH"
 fi
 
+if [ "$XCAM_MODEL" != "XHB1" ];then
+export RDK_DUMP_SYMS=${RDK_PROJECT_ROOT_PATH}/utility/prebuilts/breakpad-prebuilts/x86/dump_syms
+else
+export RDK_DUMP_SYMS=${RDK_PROJECT_ROOT_PATH}/utility/prebuilts/breakpad-prebuilts/x64/dump_syms
+fi
+export PLATFORM_SYMBOL_PATH=$RDK_PROJECT_ROOT_PATH/sdk/fsroot/syms
+
 # functional modules
 function configure()
 {
@@ -112,11 +119,11 @@ function configure()
     configure_options="--host=$DEFAULT_HOST --target=$DEFAULT_HOST"
 
 if [ "$XCAM_MODEL" == "SCHC2" ]; then
-    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -lrtMessage -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/Release/src -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/password/src -L${RDK_PROJECT_ROOT_PATH}/rbuscore/build/rbus-core/lib/ -lrbus-core -L${RDK_PROJECT_ROOT_PATH}/rbus/build/src/ -lrbus -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib"
+    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -lrtMessage -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/Release/src -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/password/src -L${RDK_PROJECT_ROOT_PATH}/rbuscore/build/rbus-core/lib/ -lrbus-core -L${RDK_PROJECT_ROOT_PATH}/rbus/build/src/ -lrbus -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib -lcimplog"
 else
-    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -lrtMessage -L${RDK_PROJECT_ROOT_PATH}/rbuscore/build/rbus-core/lib/ -lrbus-core -L${RDK_PROJECT_ROOT_PATH}/rbus/build/src/ -lrbus -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib"
+    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -lrtMessage -L${RDK_PROJECT_ROOT_PATH}/rbuscore/build/rbus-core/lib/ -lrbus-core -L${RDK_PROJECT_ROOT_PATH}/rbus/build/src/ -lrbus -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib -lcimplog"
 fi
-    export CFLAGS+="-I${RDK_PROJECT_ROOT_PATH}/opensource/include -fPIC -I${RDK_PROJECT_ROOT_PATH}/rdklogger/include -I${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -I${RDK_PROJECT_ROOT_PATH}/rbuscore/rbus-core/include/ -I${RDK_PROJECT_ROOT_PATH}/rbus/include/ -I${RDK_FSROOT_PATH}/usr/include/ -I${RDK_FSROOT_PATH}/usr/include/rbus -DENABLE_RDKC_SUPPORT"
+    export CFLAGS+="-I${RDK_PROJECT_ROOT_PATH}/opensource/include -g -fPIC -I${RDK_PROJECT_ROOT_PATH}/rdklogger/include -I${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -I${RDK_PROJECT_ROOT_PATH}/rbuscore/rbus-core/include/ -I${RDK_PROJECT_ROOT_PATH}/rbus/include/ -I${RDK_FSROOT_PATH}/usr/include/ -I${RDK_FSROOT_PATH}/usr/include/rbus -DENABLE_RDKC_SUPPORT -I${RDK_PROJECT_ROOT_PATH}/opensource/include/cimplog -DWEBCONFIG_BIN_SUPPORT"
 
     export ac_cv_func_malloc_0_nonnull=yes
     export ac_cv_func_memset=yes
@@ -158,6 +165,11 @@ function install()
     cp include/webconfig_framework.h ${RDK_FSROOT_PATH}/usr/include
     cp include/webconfig_err.h ${RDK_FSROOT_PATH}/usr/include
     cd ${RDK_SOURCE_PATH}/source/.libs
+
+    $RDK_DUMP_SYMS libwebconfig_framework.so.0.0.0  > libwebconfig_framework.so.0.0.0.sym
+    mv ./*.sym $PLATFORM_SYMBOL_PATH
+    echo "Debug symbol created for libwebconfig_framework"
+
     cp libwebconfig_framework.so* ${RDK_FSROOT_PATH}/usr/lib/
 }
 

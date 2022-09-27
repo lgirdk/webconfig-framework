@@ -16,7 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#if !defined(CCSP_SUPPORT_ENABLED)
+
+#if defined(ENABLE_RDKC_SUPPORT)
+
+const char *rdk_logger_module_fetch(void)
+{
+    return "LOG.RDK.WEBCONFIG";
+}
+
+#elif !defined(CCSP_SUPPORT_ENABLED)
 
 #include "webconfig_logging.h"
 
