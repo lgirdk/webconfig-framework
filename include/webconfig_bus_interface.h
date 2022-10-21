@@ -22,10 +22,6 @@
 #define  _WEBCONFIG_BUS_INTERFACE_H
 
 #include <rbus.h>
-#include <rbus-core/rbus_core.h>
-#include <rbus-core/rbus_session_mgr.h>
-#include <rtmessage/rtLog.h>
-
 #include "webconfig_framework.h"
 
 int isWebCfgRbusEnabled();
