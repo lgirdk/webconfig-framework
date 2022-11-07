@@ -21,7 +21,7 @@
 <environment>
   <components>
     <webconfig-framework>
-     <dependencies>sdk,curl,cjson,rtmessage,rbuscore,rbus</dependencies>
+     <dependencies>sdk,curl,cjson,rbus</dependencies>
      <paths>
        <scripts>webconfig-framework/</scripts>
        <target>webconfig-framework/</target>
