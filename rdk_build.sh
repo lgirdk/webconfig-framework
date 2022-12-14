@@ -46,7 +46,6 @@ export RDK_FSROOT_PATH=$RDK_PROJECT_ROOT_PATH/sdk/fsroot/ramdisk
 #source $RDK_SCRIPTS_PATH/soc/build/soc_env.sh
 
 # To enable rtMessage
-export RTMESSAGE=yes
 
 if [ "$XCAM_MODEL" == "SCHC2" ]; then
  echo "Configuring for XCAM2"
@@ -119,11 +118,11 @@ function configure()
     configure_options="--host=$DEFAULT_HOST --target=$DEFAULT_HOST"
 
 if [ "$XCAM_MODEL" == "SCHC2" ]; then
-    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -lrtMessage -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/Release/src -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/password/src -L${RDK_PROJECT_ROOT_PATH}/rbuscore/build/rbus-core/lib/ -lrbus-core -L${RDK_PROJECT_ROOT_PATH}/rbus/build/src/ -lrbus -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib -lcimplog"
+    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/Release/src -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/libexchanger/password/src -L${RDK_FSROOT_PATH}/usr/lib -lrbus -lrtMessage -lrbuscore -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib -lcimplog"
 else
-    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -lrtMessage -L${RDK_PROJECT_ROOT_PATH}/rbuscore/build/rbus-core/lib/ -lrbus-core -L${RDK_PROJECT_ROOT_PATH}/rbus/build/src/ -lrbus -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib -lcimplog"
+    export LDFLAGS+="-L${RDK_PROJECT_ROOT_PATH}/opensource/lib -lz -L${RDK_PROJECT_ROOT_PATH}/rdklogger/src/.libs -lrdkloggers -L${RDK_FSROOT_PATH}/usr/lib -lrbus -lrtMessage -lrbuscore -Wl,-rpath-link=${RDK_PROJECT_ROOT_PATH}/opensource/lib -lcimplog"
 fi
-    export CFLAGS+="-I${RDK_PROJECT_ROOT_PATH}/opensource/include -g -fPIC -I${RDK_PROJECT_ROOT_PATH}/rdklogger/include -I${RDK_PROJECT_ROOT_PATH}/opensource/src/rtmessage/ -I${RDK_PROJECT_ROOT_PATH}/rbuscore/rbus-core/include/ -I${RDK_PROJECT_ROOT_PATH}/rbus/include/ -I${RDK_FSROOT_PATH}/usr/include/ -I${RDK_FSROOT_PATH}/usr/include/rbus -DENABLE_RDKC_SUPPORT -I${RDK_PROJECT_ROOT_PATH}/opensource/include/cimplog -DWEBCONFIG_BIN_SUPPORT"
+    export CFLAGS+="-I${RDK_PROJECT_ROOT_PATH}/opensource/include -g -fPIC -I${RDK_PROJECT_ROOT_PATH}/rdklogger/include -I${RDK_PROJECT_ROOT_PATH}/rbus/include/ -I${RDK_FSROOT_PATH}/usr/include/ -I${RDK_FSROOT_PATH}/usr/include/rbus -I${RDK_FSROOT_PATH}/usr/include/rtmessage/ -DENABLE_RDKC_SUPPORT -I${RDK_PROJECT_ROOT_PATH}/opensource/include/cimplog -DWEBCONFIG_BIN_SUPPORT"
 
     export ac_cv_func_malloc_0_nonnull=yes
     export ac_cv_func_memset=yes
