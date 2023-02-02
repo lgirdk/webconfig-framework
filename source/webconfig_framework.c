@@ -264,14 +264,19 @@ void register_sub_docs(blobRegInfo *bInfo,int NumOfSubdocs, getVersion getv , se
 	// Intialize message queue
 	initMessageQueue();
 	
-	pthread_t tid;
+	pthread_t tid, tid_sub;
 
 	int ret = pthread_create(&tid, NULL, &display_subDocs, NULL); 
 
 	if ( ret != 0 )
 		WbError(("%s: display_subDocs pthread_create failed , ERROR : %s \n", __FUNCTION__,strerror(errno)));
 
+	//Thread to subscribe WEBCFG_SUBDOC_FORCE_RESET_EVENT 
+	ret = pthread_create(&tid_sub, NULL, &subscribeSubdocForceReset, NULL); 
 
+	if ( ret != 0 )
+		WbError(("%s: subscribeSubdocForceReset pthread_create failed , ERROR : %s \n", __FUNCTION__,strerror(errno)));
+		
 }
 
 /*************************************************************************************************************************************
@@ -1500,4 +1505,28 @@ void PushBlobRequest (execData *exec_data )
 EXIT : 
 	if ( exec_data->freeResources ) 
 		exec_data->freeResources(exec_data);
+}
+
+int resetSubdocVersion(char* subdoc_name) {
+
+	pthread_mutex_lock(&reg_subdoc);
+	PblobRegInfo blobResetVersion;;
+	blobResetVersion = blobData;
+
+	for (int i=0; i < gNumOfSubdocs; i++)
+	{
+		if (0 == strncmp(subdoc_name, blobResetVersion->subdoc_name, strlen(blobResetVersion->subdoc_name))) {
+			WbInfo(("%s : Resetting subdoc version for '%s'\n",__FUNCTION__, subdoc_name));
+			if (updateVersion != NULL ) {
+	   			updateVersion(blobResetVersion->subdoc_name,0);
+				blobResetVersion->version = 0;
+				pthread_mutex_unlock(&reg_subdoc);
+				WbInfo(("%s : Subdoc version reset success for '%s'\n",__FUNCTION__, subdoc_name));
+				return 0;
+			}
+		}
+		blobResetVersion++;
+	}
+	pthread_mutex_unlock(&reg_subdoc);
+	return 1;
 }

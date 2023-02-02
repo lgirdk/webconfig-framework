@@ -103,6 +103,9 @@ extern ANSC_HANDLE bus_handle;
 
 #define SUBDOC_NAME_SZ              64
 
+#define WEBCFG_SUBDOC_FORCE_RESET_EVENT	"Device.X_RDK_WebConfig.webcfgSubdocForceReset"
+#define SUBDOC_FORCE_RESET_SUB_TIMEOUT 300
+
 /************************************************************************************
 
  * blob_exec_state maintains the state of execution
@@ -470,6 +473,8 @@ int checkIfVersionExecInQueue(uint32_t version,int *queueIndex);
 void sendWebConfigSignal(char* data);
 
 size_t getPendingQueueTimeout(uint16_t txid);
+
+int resetSubdocVersion(char* subdoc_name);
 
 #ifdef WBCFG_MULTI_COMP_SUPPORT
 

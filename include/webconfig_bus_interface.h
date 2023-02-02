@@ -24,7 +24,10 @@
 #include <rbus.h>
 #include "webconfig_framework.h"
 
+void rbusInit();
 int isWebCfgRbusEnabled();
+void* subscribeSubdocForceReset(void* arg);
+void subdocForceReset_callbk_rbus(rbusHandle_t handle, rbusEvent_t const* event, rbusEventSubscription_t* subscription);
 
 #ifdef WBCFG_MULTI_COMP_SUPPORT
 

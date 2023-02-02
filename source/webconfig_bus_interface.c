@@ -19,10 +19,122 @@
 #include "webconfig_bus_interface.h"
 #include "webconfig_logging.h"
 
-#ifdef WBCFG_MULTI_COMP_SUPPORT
-
 static int gRbusEnabled = 0;
 static rbusHandle_t bus_handle_rbus = NULL;
+extern char process_name[64] ;
+
+pthread_mutex_t webcfg_rbus_enable = PTHREAD_MUTEX_INITIALIZER;
+
+void rbusInit()
+{
+	WbInfo(("Entering %s\n", __FUNCTION__));
+
+	int ret = RBUS_ERROR_SUCCESS;
+	char comp_name_wbcfg[72];
+	memset(comp_name_wbcfg,0,sizeof(comp_name_wbcfg));
+	snprintf(comp_name_wbcfg,sizeof(comp_name_wbcfg),"%s_wbcfg",process_name);
+	ret = rbus_open(&bus_handle_rbus, comp_name_wbcfg);
+
+	if(ret != RBUS_ERROR_SUCCESS) {
+		WbError(("%s: init failed with error code %d \n", __FUNCTION__, ret));
+		return ;
+	}    
+}
+
+int isWebCfgRbusEnabled()
+{
+	pthread_mutex_lock(&webcfg_rbus_enable);
+	if ( gRbusEnabled == 0 )
+	{
+		if(RBUS_ENABLED == rbus_checkStatus()) 
+		{
+			rbusInit();
+			gRbusEnabled = 1 ;
+		}   
+	}
+    WbInfo(("%s: rbus enabled is %d \n", __FUNCTION__, gRbusEnabled));
+	pthread_mutex_unlock(&webcfg_rbus_enable);
+    return gRbusEnabled;
+}
+
+void* subscribeSubdocForceReset(void* arg) {
+	pthread_detach(pthread_self());
+	if(1 == isWebCfgRbusEnabled()) {
+		WbInfo(("%s: subscribing to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+		int ret = RBUS_ERROR_BUS_ERROR;
+		struct timespec start_time;
+		time_t end_time;
+		clock_gettime(CLOCK_MONOTONIC, &start_time);
+		end_time = start_time.tv_sec + SUBDOC_FORCE_RESET_SUB_TIMEOUT;
+		while(start_time.tv_sec < end_time) {
+			ret = rbusEvent_Subscribe(bus_handle_rbus, WEBCFG_SUBDOC_FORCE_RESET_EVENT, subdocForceReset_callbk_rbus, process_name, 0);
+			if ((ret == RBUS_ERROR_SUCCESS) || (ret == RBUS_ERROR_SUBSCRIPTION_ALREADY_EXIST)) {
+				WbInfo(("%s: subscribed to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+				break;
+			}
+			else {
+				WbError(("%s: Unable to subscribe to event %s with rbus error code : %d\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT, ret));
+			}
+			sleep(5);
+			memset(&start_time,0,sizeof(start_time));
+			clock_gettime(CLOCK_MONOTONIC, &start_time);
+		}
+		WbInfo(("%s: job done\n", __FUNCTION__));
+	}
+	else {
+		WbError(("RBUS disabled. Unable to subscribe to event %s\n", WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+
+	}
+	return arg;
+}
+
+/*************************************************************************************************************************************
+
+    caller:    callback function for WEBCFG_SUBDOC_FORCE_RESET_EVENT
+
+    prototype:
+        void subdocForceReset_callbk_rbus
+        (rbusHandle_t handle,
+         rbusEvent_t const* event, 
+         rbusEventSubscription_t* subscription) 
+            
+        );
+
+    description :
+    callback function for WEBCFG_SUBDOC_FORCE_RESET_EVENT
+
+
+****************************************************************************************************************************************/
+
+void subdocForceReset_callbk_rbus(rbusHandle_t handle, rbusEvent_t const* event, rbusEventSubscription_t* subscription) {
+	WbInfo(("Entering %s\n", __FUNCTION__));
+
+	(void)(handle);
+	(void)(subscription);
+
+	const char* eventName = event->name;
+
+    rbusValue_t valBuff;
+    valBuff = rbusObject_GetValue(event->data, NULL );
+    if(!valBuff)
+    {
+        WbInfo(("%s FAIL: value is NULL\n", __FUNCTION__));
+    }
+    else
+    {
+		char* subdocName;
+        char* data = (char*) rbusValue_GetString(valBuff, NULL);
+        WbInfo(("rbus event callback Event is %s , data is %s\n",eventName,data));
+
+		while ((subdocName = strtok_r(data, ",", &data))) {
+			WbInfo(("%s : Procssing subdoc version reset for '%s'\n",__FUNCTION__, subdocName));
+			resetSubdocVersion(subdocName);
+		}
+    }
+    WbInfo(("Exiting %s\n", __FUNCTION__));
+}
+
+#ifdef WBCFG_MULTI_COMP_SUPPORT
 
 int gBroadcastSubscribed = 0;
 int gMasterSubscribed = 0;
@@ -41,39 +153,6 @@ rbusDataElement_t dataElements_broadcast[1] = {
               {BROADCASTSIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandler, NULL}}
           };
 
-extern char process_name[64] ;
-  
-
-void rbusInit()
-{
-          WbInfo(("Entering %s\n", __FUNCTION__));
-
-          int ret = RBUS_ERROR_SUCCESS;
-          char comp_name_wbcfg[72];
-          memset(comp_name_wbcfg,0,sizeof(comp_name_wbcfg));
-          snprintf(comp_name_wbcfg,sizeof(comp_name_wbcfg),"%s_wbcfg",process_name);
-          ret = rbus_open(&bus_handle_rbus, comp_name_wbcfg);
-
-         if(ret != RBUS_ERROR_SUCCESS) {
-              WbError(("%s: init failed with error code %d \n", __FUNCTION__, ret));
-               return ;
-         }    
-
-}
-
-int isWebCfgRbusEnabled()
-{
-    	if ( gRbusEnabled == 0 )
-    	{
-        	if(RBUS_ENABLED == rbus_checkStatus()) 
-         	{
-            		rbusInit();
-            		gRbusEnabled = 1 ;
-         	}   
-    	}
-      WbInfo(("%s: rbus enabled is %d \n", __FUNCTION__, gRbusEnabled));
-    	return gRbusEnabled;
-}
 
 /*************************************************************************************************************************************
 
