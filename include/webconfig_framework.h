@@ -105,6 +105,7 @@ extern ANSC_HANDLE bus_handle;
 
 #define WEBCFG_SUBDOC_FORCE_RESET_EVENT	"Device.X_RDK_WebConfig.webcfgSubdocForceReset"
 #define SUBDOC_FORCE_RESET_SUB_TIMEOUT 300
+#define SUBDOC_FORCE_RESET_DEVICE_UPTIME_TIMEOUT 180
 
 /************************************************************************************
 

@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+#include <sys/sysinfo.h>
 #include "webconfig_bus_interface.h"
 #include "webconfig_logging.h"
 
@@ -59,25 +60,24 @@ int isWebCfgRbusEnabled()
 
 void* subscribeSubdocForceReset(void* arg) {
 	pthread_detach(pthread_self());
+	struct sysinfo s_info;
+	sysinfo(&s_info);
+	//wait until device uptime is 3min
+	while(s_info.uptime < SUBDOC_FORCE_RESET_DEVICE_UPTIME_TIMEOUT)
+	{
+		sysinfo(&s_info);
+		sleep(10);
+	}
+	WbInfo(("%s : Device uptime is more than 3 mins \n",__FUNCTION__));
 	if(1 == isWebCfgRbusEnabled()) {
 		WbInfo(("%s: subscribing to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
 		int ret = RBUS_ERROR_BUS_ERROR;
-		struct timespec start_time;
-		time_t end_time;
-		clock_gettime(CLOCK_MONOTONIC, &start_time);
-		end_time = start_time.tv_sec + SUBDOC_FORCE_RESET_SUB_TIMEOUT;
-		while(start_time.tv_sec < end_time) {
-			ret = rbusEvent_Subscribe(bus_handle_rbus, WEBCFG_SUBDOC_FORCE_RESET_EVENT, subdocForceReset_callbk_rbus, process_name, 0);
-			if ((ret == RBUS_ERROR_SUCCESS) || (ret == RBUS_ERROR_SUBSCRIPTION_ALREADY_EXIST)) {
-				WbInfo(("%s: subscribed to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
-				break;
-			}
-			else {
-				WbError(("%s: Unable to subscribe to event %s with rbus error code : %d\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT, ret));
-			}
-			sleep(5);
-			memset(&start_time,0,sizeof(start_time));
-			clock_gettime(CLOCK_MONOTONIC, &start_time);
+		ret = rbusEvent_Subscribe(bus_handle_rbus, WEBCFG_SUBDOC_FORCE_RESET_EVENT, subdocForceReset_callbk_rbus, process_name, SUBDOC_FORCE_RESET_SUB_TIMEOUT);
+		if ((ret == RBUS_ERROR_SUCCESS) || (ret == RBUS_ERROR_SUBSCRIPTION_ALREADY_EXIST)) {
+			WbInfo(("%s: subscribed to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+		}
+		else {
+			WbError(("%s: Unable to subscribe to event %s with rbus error code : %d\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT, ret));
 		}
 		WbInfo(("%s: job done\n", __FUNCTION__));
 	}
