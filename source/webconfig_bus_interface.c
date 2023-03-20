@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#include <sys/sysinfo.h>
 #include "webconfig_bus_interface.h"
 #include "webconfig_logging.h"
 
@@ -60,16 +59,23 @@ int isWebCfgRbusEnabled()
 
 void* subscribeSubdocForceReset(void* arg) {
 	pthread_detach(pthread_self());
-	struct sysinfo s_info;
-	sysinfo(&s_info);
-	//wait until device uptime is 3min
-	while(s_info.uptime < SUBDOC_FORCE_RESET_DEVICE_UPTIME_TIMEOUT)
-	{
-		sysinfo(&s_info);
-		sleep(10);
-	}
-	WbInfo(("%s : Device uptime is more than 3 mins \n",__FUNCTION__));
+
 	if(1 == isWebCfgRbusEnabled()) {
+		bool rc = false;
+		int timer_count = 0;
+
+		WbInfo(("%s: Discover component for event '%s' \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+		while(!rc) {
+			rc = webcfg_rbus_discover_component(WEBCFG_SUBDOC_FORCE_RESET_EVENT);
+			sleep(SUBDOC_FORCE_RESET_DISC_COMP_INTERVAL);
+			timer_count++;
+			if (timer_count >= SUBDOC_FORCE_RESET_DISC_COMP_TIMEOUT_COUNT) {
+				WbError(("%s: Unable to discover component for %s\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+				return arg;
+			}
+		}
+		WbInfo(("%s: [%s] Component found\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+
 		WbInfo(("%s: subscribing to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
 		int ret = RBUS_ERROR_BUS_ERROR;
 		ret = rbusEvent_Subscribe(bus_handle_rbus, WEBCFG_SUBDOC_FORCE_RESET_EVENT, subdocForceReset_callbk_rbus, process_name, SUBDOC_FORCE_RESET_SUB_TIMEOUT);
@@ -86,6 +92,43 @@ void* subscribeSubdocForceReset(void* arg) {
 
 	}
 	return arg;
+}
+
+bool webcfg_rbus_discover_component(char const *pParamName)
+{
+    rbusError_t rc = RBUS_ERROR_SUCCESS;
+    int componentCnt = 0;
+    char **pComponentNames;
+    bool ret = false;
+    char const *rbusModuleList[1];
+    int count = 1;
+
+    rbusModuleList[0] = pParamName;
+	WbInfo(("%s rbusModuleList[%s]\n", __FUNCTION__, rbusModuleList[0]));
+
+    rc = rbus_discoverComponentName(bus_handle_rbus, count, rbusModuleList, &componentCnt, &pComponentNames);
+
+    if(RBUS_ERROR_SUCCESS != rc)
+    {
+        WbError(("Failed to discover component. Error Code = %d\n", rc));
+        return ret;
+    }
+
+    for (int i = 0; i < componentCnt; i++)
+    {
+        free(pComponentNames[i]);
+    }
+
+    free(pComponentNames);
+
+    if(componentCnt == count)
+    {
+        ret = true;
+    }
+
+    WbInfo(("%s: (%d-%d)ret[%s]\n", __FUNCTION__, componentCnt, count, (ret)?"TRUE":"FALSE"));
+
+    return ret;
 }
 
 /*************************************************************************************************************************************
