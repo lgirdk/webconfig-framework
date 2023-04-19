@@ -23,6 +23,7 @@
 #include "webconfig_bus_interface.h"
 #include "webconfig_logging.h"
 #include "webconfig_err.h"
+#define MAX_DEBUG_ITER           100
 
 char mqEventName[64] = {0};
 
@@ -86,8 +87,10 @@ void* display_subDocs()
 
 	WbInfo(("Inside FUNC %s LINE %d\n",__FUNCTION__,__LINE__));
 	PblobRegInfo blobDisplayData;
-	FILE *fp;
+	FILE *fp, *fd;
+	fd=NULL;
 	int i;
+	int n;
     	int interval =DEFAULT_DEBUG_INTERVAL , num_of_dbg_iter=DEFAULT_DEBUG_ITER;
 
 	pthread_detach(pthread_self());
@@ -98,18 +101,25 @@ void* display_subDocs()
 		fp = fopen (FRAMEWORK_DEBUG, "r");
 	    	if( fp )
 	    	{ 
-	    		fscanf(fp, "%d %d", &interval,&num_of_dbg_iter);
+			n = fscanf(fp, "%d %d", &interval,&num_of_dbg_iter);//CID 144038: Unchecked return value from library (CHECKED_RETURN)
+			if (n != 2) {
+   				interval = DEFAULT_DEBUG_INTERVAL;
+   				num_of_dbg_iter = DEFAULT_DEBUG_ITER;
+                                    }
 
-			if ( interval <= 0 )
-				interval = DEFAULT_DEBUG_INTERVAL;
-			 
-			if ( num_of_dbg_iter < 0 )
-				num_of_dbg_iter = DEFAULT_DEBUG_ITER ;
+			if (num_of_dbg_iter > MAX_DEBUG_ITER) { //CID 144041: Untrusted loop bound (TAINTED_SCALAR)
+                                 num_of_dbg_iter = MAX_DEBUG_ITER; 
+                                }
 
 			WbInfo(("interval is %d, num_of_dbg_iter is %d \n",interval,num_of_dbg_iter));
 
 			do
 			{
+				if(fd)
+				{
+				    fclose(fd);
+				    fd = NULL;
+				}
 				pthread_mutex_lock(&reg_subdoc);
 
 				blobDisplayData = blobData;
@@ -176,15 +186,15 @@ void* display_subDocs()
 				num_of_dbg_iter--;
 				sleep(interval);
 
-			} while((num_of_dbg_iter>0) && (access(FRAMEWORK_DEBUG, F_OK) == 0));
+			} while((num_of_dbg_iter>0) && ((fd=fopen (FRAMEWORK_DEBUG, "r")) != 0));//CID 144042: Time of check time of use (TOCTOU)
 
 			fclose(fp);
-			fp=NULL;
+                        fp=NULL;
 
 			unlink(FRAMEWORK_DEBUG);
 			interval = DEFAULT_DEBUG_INTERVAL;
 			num_of_dbg_iter = DEFAULT_DEBUG_ITER;
-		}	
+		}	 
 	}
 	return NULL;
 }
@@ -1233,6 +1243,7 @@ int checkNewVersionUpdateRequired(execData *exec_data,int *queueIndex)
 {
 	WbInfo(("Inside FUNC %s LINE %d \n",__FUNCTION__,__LINE__));
 	int i =0 ;
+        FILE *fp;
 
     	pthread_mutex_lock(&reg_subdoc);
 
@@ -1247,9 +1258,10 @@ int checkNewVersionUpdateRequired(execData *exec_data,int *queueIndex)
 			if ( (uint32_t)blobCheckVersion->version == exec_data->version )
 	        	{
                     pthread_mutex_unlock(&reg_subdoc);
-                    if ( ( strcmp (exec_data->subdoc_name,"hotspot") == 0 ) && (access(HOTSPOT_VERSION_IGNORE, F_OK) == 0))
+                    if ( ( strcmp (exec_data->subdoc_name,"hotspot") == 0 ) && ((fp=fopen (HOTSPOT_VERSION_IGNORE, "r")) != 0))//CID 172860: Time of check time of use (TOCTOU)
                     {
                             unlink(HOTSPOT_VERSION_IGNORE);
+                            fclose(fp);
                             return VERSION_UPDATE_REQUIRED ; 
                     }
 	        		return VERSION_ALREADY_EXIST;
