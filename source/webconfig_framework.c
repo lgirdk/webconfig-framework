@@ -1512,8 +1512,9 @@ int resetSubdocVersion(char* subdoc_name) {
 	pthread_mutex_lock(&reg_subdoc);
 	PblobRegInfo blobResetVersion;;
 	blobResetVersion = blobData;
+	int i;
 
-	for (int i=0; i < gNumOfSubdocs; i++)
+	for (i = 0; i < gNumOfSubdocs; i++)
 	{
 		if (0 == strncmp(subdoc_name, blobResetVersion->subdoc_name, strlen(blobResetVersion->subdoc_name))) {
 			WbInfo(("%s : Resetting subdoc version for '%s'\n",__FUNCTION__, subdoc_name));

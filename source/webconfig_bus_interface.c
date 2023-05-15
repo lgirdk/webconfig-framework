@@ -102,6 +102,7 @@ bool webcfg_rbus_discover_component(char const *pParamName)
     bool ret = false;
     char const *rbusModuleList[1];
     int count = 1;
+    int i;
 
     rbusModuleList[0] = pParamName;
 	WbInfo(("%s rbusModuleList[%s]\n", __FUNCTION__, rbusModuleList[0]));
@@ -114,7 +115,7 @@ bool webcfg_rbus_discover_component(char const *pParamName)
         return ret;
     }
 
-    for (int i = 0; i < componentCnt; i++)
+    for (i = 0; i < componentCnt; i++)
     {
         free(pComponentNames[i]);
     }
