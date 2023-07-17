@@ -659,11 +659,12 @@ int subscribeToEvent(char* EventName)
         	ret = rbusEvent_Subscribe(bus_handle_rbus, EventName, multiComp_callbk_rbus, user_data, 60);
         	if(ret != RBUS_ERROR_SUCCESS) {
             		WbError(("Unable to subscribe to event %s with rbus error code : %d\n", EventName, ret));
+                    return -1;
         	} 
         
         	WbInfo(("%s : subscribe to %s ret value is %d\n", __FUNCTION__,EventName,ret));
     	}
-   	return ret;   
+   	return 0;   
 }
 
 #endif 

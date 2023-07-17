@@ -89,11 +89,12 @@ void* event_register_slave(void* subdoc_name)
     if ( slaveExecutionCount == 0 )
     {
         EventRegister(SLAVE_COMP_SIGNAL_NAME);
-        subscribeToEvent(SLAVE_COMP_SIGNAL_NAME);
 
+        if ( 0 == subscribeToEvent(SLAVE_COMP_SIGNAL_NAME))
+        {
+            slaveExecutionCount++;
+        }
     }
-
-    slaveExecutionCount++;
 
     int counter = 0 ;
 
