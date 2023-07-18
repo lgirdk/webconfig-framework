@@ -690,7 +690,7 @@ void sendWebConfigSignal(char* data)
           	rbusMessage_Init(&request);
           	rbusMessage_SetString(request,data);
           	WbInfo(("%s : rbus_publishEvent :: event_name : %s :: \n", __FUNCTION__, "webconfigSignal"));
-          	if(( ret = rbus_invokeRemoteMethod("eRT.com.cisco.spvtg.ccsp.webpaagent", "webconfigSignal", request, 6000, &response)) != RTMESSAGE_BUS_SUCCESS )
+          	if(( ret = rbus_invokeRemoteMethod("eRT.com.cisco.spvtg.ccsp.webpaagent", "webconfigSignal", request, 6000, &response)) != RBUSCORE_SUCCESS )
          	{
               		WbError(("%s rbus_invokeRemoteMethod for webconfigSignal failed & returns with Err: %d\n", __FUNCTION__, ret));
           	}

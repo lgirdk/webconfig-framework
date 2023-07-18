@@ -22,6 +22,7 @@
 #define  _WEBCONFIG_BUS_INTERFACE_H
 
 #include <rbus.h>
+#include <rbus/rbuscore.h>
 #include <stdbool.h>
 #include "webconfig_framework.h"
 
