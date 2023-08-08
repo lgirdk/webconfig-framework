@@ -26,7 +26,7 @@
 #define WbInfo     CcspTraceInfo
 #define WbError    CcspTraceError
 #define WbWarning  CcspTraceWarning  
-
+#define WbDebug    CcspTraceDebug
 #elif defined(ENABLE_RDKC_SUPPORT)
 #include <cimplog.h>
 
@@ -36,7 +36,7 @@
 #define WbError(msg)        cimplog_error(LOGGING_MODULE, EXTRACT_ARGS msg)
 #define WbInfo(msg)         cimplog_info(LOGGING_MODULE, EXTRACT_ARGS msg)
 #define WbWarning(msg)      cimplog_info(LOGGING_MODULE, EXTRACT_ARGS msg)
-
+#define WbDebug(msg)        cimplog_debug(LOGGING_MODULE, EXTRACT_ARGS msg)
 #else
 
 #include<stdio.h>
@@ -56,6 +56,8 @@ void wbTraceLogAPI(const char *format, ...);
 #define  WbWarning(msg)  \
             wbTraceLogAPI(EXTRACT_ARGS msg); 
 
+#define  WbDebug(msg)   \
+            wbTraceLogAPI(EXTRACT_ARGS msg); 
 
 #endif
 

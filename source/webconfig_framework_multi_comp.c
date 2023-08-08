@@ -1702,7 +1702,9 @@ void* execute_request_master(void *arg)
 
     	execData *exec_data  = (execData*) arg;
     	execReturnMultiComp = exec_data->executeBlobRequest(gMasterExecData);
+        WbInfo(("DEBUG before pthread_mutex_lock:%s LINE %d\n",__FUNCTION__,__LINE__));
     	pthread_mutex_lock(&multiCompState_access);
+        WbInfo(("DEBUG after pthread_mutex_lock:%s LINE %d\n",__FUNCTION__,__LINE__));
     	if ( gMultiCompExecState == NULL )
     	{
         	WbInfo(("%s : gMultiCompExecState is NULL , returning \n",__FUNCTION__));
@@ -1721,6 +1723,7 @@ void* execute_request_master(void *arg)
 
       	lMultiCompExecData =  gMultiCompExecState ;
 
+        WbInfo(("DEBUG :gNumOfComponents :%d ,%s LINE %d\n",gNumOfComponents,__FUNCTION__,__LINE__));
       	j = 0;
       	for (j=0; j < gNumOfComponents ; j++)
       	{
@@ -1731,7 +1734,7 @@ void* execute_request_master(void *arg)
 
           	lMultiCompExecData++;
       	}
-      
+        WbInfo(("DEBUG :%s LINE %d,ErrorCode:%d\n",__FUNCTION__,__LINE__,execReturnMultiComp->ErrorCode));
       	if ( execReturnMultiComp->ErrorCode == BLOB_EXEC_SUCCESS )
       	{
         	lMultiCompExecData->executionStatus = 1 ;
@@ -1739,14 +1742,14 @@ void* execute_request_master(void *arg)
                     
        	lMultiCompExecData->execResult =  execReturnMultiComp->ErrorCode ;
        	strncpy(lMultiCompExecData->execRetMsg,execReturnMultiComp->ErrorMsg,sizeof(lMultiCompExecData->execRetMsg)-1);
-
+        WbInfo(("DEBUG :before pthread_mutex_unlock :%s LINE %d\n",__FUNCTION__,__LINE__));
        	pthread_mutex_unlock(&multiCompState_access);
 
       	WbInfo(("completed %s LINE %d \n",__FUNCTION__,__LINE__));
 
     	/* wake up the caller if execution is completed in time */
       	pthread_cond_signal(&MultiCompCond);
-    	
+    	WbInfo(("send MultiCompCond signal %s LINE %d \n",__FUNCTION__,__LINE__));
 	return NULL;
 }
 
@@ -2034,7 +2037,8 @@ void* messageQueueProcessingMultiComp()
                           		{
                               			gMasterExecData = sequenceData->multiCompExecData->comp_exec_data ;
                                   		pthreadRetValue=pthread_create(&tid, NULL, execute_request_master,(void*)buffer);
-                                  		if ( 0 != pthreadRetValue )
+                                  		WbInfo(("DEBUG :pthreadRetValue:%d isExecInSequenceNeeded:%d\n",pthreadRetValue,sequenceData->isExecInSequenceNeeded));
+                                        if ( 0 != pthreadRetValue )
                                   		{
                                     			WbError(("%s: execute_request pthread_create failed , ERROR : %s \n", __FUNCTION__,strerror(errno)));
 
@@ -2070,6 +2074,7 @@ void* messageQueueProcessingMultiComp()
                                     			// provide only master timeout
                                     			abs_time.tv_sec += MAX_FUNC_EXEC_TIMEOUT * exec_data->calcTimeout(1) ;
                                     			abs_time.tv_nsec += 0;
+                                                WbInfo(("DEBUG :wait at pthread cond:%s LINE %d\n",__FUNCTION__,__LINE__));
                                     			err = pthread_cond_timedwait(&MultiCompCond, &MultiCompMutex, &abs_time);
                                     			if (err == ETIMEDOUT)
                                     			{
@@ -2089,6 +2094,7 @@ void* messageQueueProcessingMultiComp()
                                     			}
                                     			else
                                     			{
+                                                    WbInfo(("DEBUG :ErrorCode:%d:%s %d\n",execReturnMultiComp->ErrorCode ,__FUNCTION__,__LINE__));
                                       				if ( BLOB_EXEC_SUCCESS == execReturnMultiComp->ErrorCode )
                                       				{
                                           				WbInfo(("%s : Master component execution success\n",__FUNCTION__));
@@ -2110,7 +2116,7 @@ void* messageQueueProcessingMultiComp()
                                       				}
                                     			}
                                   		} 
-
+                                        WbInfo(("DEBUG :%s LINE %d\n",__FUNCTION__,__LINE__));
                           		}
                          		else
                           		{ 
@@ -2126,7 +2132,7 @@ void* messageQueueProcessingMultiComp()
                       		sequenceData->multiCompExecData++;
                       		mCompExecState++ ;
                  	}
-
+                     WbInfo(("DEBUG : %s LINE %d isExecInSequenceNeeded :%d\n",__FUNCTION__,__LINE__,sequenceData->isExecInSequenceNeeded));
                  	if (  sequenceData->isExecInSequenceNeeded == 0 )
                  	{
 
