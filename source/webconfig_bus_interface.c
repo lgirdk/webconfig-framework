@@ -186,15 +186,15 @@ int gSlaveSubscribed = 0;
 
 extern int slaveExecutionCount ;
 rbusDataElement_t dataElements_slave[1] = {
-                            {MASTER_COMP_SIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandler, NULL}}
+                            {MASTER_COMP_SIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandlerWbFramework, NULL}}
                         };
 
 rbusDataElement_t dataElements_master[1] = {
-                 {SLAVE_COMP_SIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandler, NULL}}
+                 {SLAVE_COMP_SIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandlerWbFramework, NULL}}
                };   
 
 rbusDataElement_t dataElements_broadcast[1] = {
-              {BROADCASTSIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandler, NULL}}
+              {BROADCASTSIGNAL_NAME, RBUS_ELEMENT_TYPE_EVENT, {NULL,NULL,NULL,NULL, eventSubHandlerWbFramework, NULL}}
           };
 
 
@@ -256,7 +256,7 @@ void multiComp_callbk_rbus(rbusHandle_t handle, rbusEvent_t const* event, rbusEv
     caller:    event subscription notification
 
     prototype:
-    rbusError_t eventSubHandler
+    rbusError_t eventSubHandlerWbFramework
     (
       rbusHandle_t handle, 
       rbusEventSubAction_t action, 
@@ -273,7 +273,7 @@ void multiComp_callbk_rbus(rbusHandle_t handle, rbusEvent_t const* event, rbusEv
 ****************************************************************************************************************************************/
 
 
-rbusError_t eventSubHandler(rbusHandle_t handle, rbusEventSubAction_t action, const char* eventName, rbusFilter_t filter, int32_t interval, bool* autoPublish)
+rbusError_t eventSubHandlerWbFramework(rbusHandle_t handle, rbusEventSubAction_t action, const char* eventName, rbusFilter_t filter, int32_t interval, bool* autoPublish)
 {
 	(void)handle;
     	(void)filter;
@@ -281,7 +281,7 @@ rbusError_t eventSubHandler(rbusHandle_t handle, rbusEventSubAction_t action, co
     	(void)autoPublish;
 
     	WbInfo((
-        	"eventSubHandler called:\n" \
+        	"eventSubHandlerWbFramework called:\n" \
         	"\taction=%s\n" \
         	"\teventName=%s\n",
         	action == RBUS_EVENT_ACTION_SUBSCRIBE ? "subscribe" : "unsubscribe",
@@ -307,7 +307,7 @@ rbusError_t eventSubHandler(rbusHandle_t handle, rbusEventSubAction_t action, co
     	}
     	else
     	{
-        	WbError(("provider: eventSubHandler unexpected eventName %s\n", eventName));
+        	WbError(("provider: eventSubHandlerWbFramework unexpected eventName %s\n", eventName));
     	}
 
     	return RBUS_ERROR_SUCCESS;
