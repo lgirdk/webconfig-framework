@@ -97,11 +97,6 @@ if [ "$XCAM_MODEL" == "SCHC2" ]; then
   export PKG_CONFIG_PATH="$RDK_PROJECT_ROOT_PATH/opensource/lib/pkgconfig/:$RDK_FSROOT_PATH/img/fs/shadow_root/usr/local/lib/pkgconfig/:$RDK_TOOLCHAIN_PATH/lib/pkgconfig/:$PKG_CONFIG_PATH"
 fi
 
-if [ "$XCAM_MODEL" != "XHB1" ];then
-export RDK_DUMP_SYMS=${RDK_PROJECT_ROOT_PATH}/utility/prebuilts/breakpad-prebuilts/x86/dump_syms
-else
-export RDK_DUMP_SYMS=${RDK_PROJECT_ROOT_PATH}/utility/prebuilts/breakpad-prebuilts/x64/dump_syms
-fi
 export PLATFORM_SYMBOL_PATH=$RDK_PROJECT_ROOT_PATH/sdk/fsroot/syms
 
 # functional modules
