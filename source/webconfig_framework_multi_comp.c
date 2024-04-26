@@ -98,24 +98,20 @@ void* event_register_slave(void* subdoc_name)
 
     int counter = 0 ;
 
-    if ( 1 == isWebCfgRbusEnabled() )
+    while ( !gMasterSubscribed )
     {
-        while ( !gMasterSubscribed )
+        sleep(2);
+        counter += 2;
+
+        // Waiting for MAX_RESPONSE_TIME/3 times, if we don't receive subscription notification send data to master component
+        // If master component receives data , then it will send the blob data otherwise it will rollback and send NACK to webconfig client
+        if ( counter > (MAX_RESPONSE_TIME/3) )
         {
-            sleep(2);
-            counter += 2 ;
-
-            // Waiting for MAX_RESPONSE_TIME/3 times, if we don't receive subscription notification send data to master component
-            // If master component receives data , then it will send the blob data otherwise it will rollback and send NACK to webconfig client
-            if ( counter > (MAX_RESPONSE_TIME/3) )
-            {
-                WbInfo(("master failed to subscribe to %s\n",MASTER_COMP_SIGNAL_NAME));
-                break;
-
-            }
+            WbInfo(("master failed to subscribe to %s\n",MASTER_COMP_SIGNAL_NAME));
+            break;
         }
-        sleep (2);
     }
+    sleep (2);
 
     char data[256] = {0};
     memset(data,0,sizeof(data));
@@ -423,18 +419,10 @@ void rollbackLastExec(char* subdoc_name)
     	slaveExecutionCount--;
     	// Unreg slave signal if count is zero
    	if ( slaveExecutionCount == 0 )
-    	{
-        	if ( 1 == isWebCfgRbusEnabled() )
-          	{
-              		UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
-              		// For RBUS unreg is called from eventSubHandler callback
-          	}
-          	else
-          	{
-              		UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
-          	}
-    	}
-      	return ;
+    {
+        UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
+        // For RBUS unreg is called from eventSubHandler callback
+    }
 }
 
 /*************************************************************************************************************************************
@@ -530,15 +518,8 @@ void sendBlobExecutionResult(char* subdoc_name, int exec_status, int execRet, ch
       	// Unreg slave signal if count is zero
       	if ( slaveExecutionCount == 0 )
       	{
-        	if ( 1 == isWebCfgRbusEnabled() )
-            	{
-                	UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
-                	// For RBUS unreg is called from eventSubHandler callback
-            	}
-            	else
-            	{
-                	UnregisterFromEvent(SLAVE_COMP_SIGNAL_NAME);
-            	}
+        	UnSubscribeFromEvent(SLAVE_COMP_SIGNAL_NAME);
+        	// For RBUS unreg is called from eventSubHandler callback
       	}
 }
 
@@ -2560,15 +2541,15 @@ void PushMultiCompBlobRequest (execData *exec_data )
       	mqd_t mq;
       	//struct mq_attr attr;
       	/* open the message queue */
-    	if ( 1 == isWebCfgRbusEnabled()  && !gBroadcastSubscribed )
-    	{       
+        if (!gBroadcastSubscribed)
+        {
                 if(exec_data->disableWebCfgNotification != 1)
                 {
                         WbError(("Slave component is not yet ready to receive the requests, sending NACK \n"));
                         send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,SLAVE_NOT_READY,"Slave Comp Not Ready");
                 }
         	goto EXIT;
-    	}
+        }
   	retVal =  checkNewVersionUpdateRequired(exec_data,&queueIndex);
   	if ( VERSION_UPDATE_REQUIRED == retVal ) 
   	{

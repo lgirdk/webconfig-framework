@@ -19,7 +19,6 @@
 #include "webconfig_bus_interface.h"
 #include "webconfig_logging.h"
 
-static int gRbusEnabled = 0;
 static rbusHandle_t bus_handle_rbus = NULL;
 extern char process_name[64] ;
 
@@ -41,56 +40,35 @@ void rbusInit()
 	}    
 }
 
-int isWebCfgRbusEnabled()
-{
-	pthread_mutex_lock(&webcfg_rbus_enable);
-	if ( gRbusEnabled == 0 )
-	{
-		if(RBUS_ENABLED == rbus_checkStatus()) 
-		{
-			rbusInit();
-			gRbusEnabled = 1 ;
-		}   
-	}
-    WbInfo(("%s: rbus enabled is %d \n", __FUNCTION__, gRbusEnabled));
-	pthread_mutex_unlock(&webcfg_rbus_enable);
-    return gRbusEnabled;
-}
-
 void* subscribeSubdocForceReset(void* arg) {
 	pthread_detach(pthread_self());
 
-	if(1 == isWebCfgRbusEnabled()) {
-		bool rc = false;
-		int timer_count = 0;
+	bool rc = false;
+	int timer_count = 0;
 
-		WbInfo(("%s: Discover component for event '%s' \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
-		while(!rc) {
-			rc = webcfg_rbus_discover_component(WEBCFG_SUBDOC_FORCE_RESET_EVENT);
-			sleep(SUBDOC_FORCE_RESET_DISC_COMP_INTERVAL);
-			timer_count++;
-			if (timer_count >= SUBDOC_FORCE_RESET_DISC_COMP_TIMEOUT_COUNT) {
-				WbError(("%s: Unable to discover component for %s\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
-				return arg;
-			}
+	WbInfo(("%s: Discover component for event '%s' \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+	while(!rc) {
+		rc = webcfg_rbus_discover_component(WEBCFG_SUBDOC_FORCE_RESET_EVENT);
+		sleep(SUBDOC_FORCE_RESET_DISC_COMP_INTERVAL);
+		timer_count++;
+		if (timer_count >= SUBDOC_FORCE_RESET_DISC_COMP_TIMEOUT_COUNT) {
+			WbError(("%s: Unable to discover component for %s\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+			return arg;
 		}
-		WbInfo(("%s: [%s] Component found\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+	}
+	WbInfo(("%s: [%s] Component found\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
 
-		WbInfo(("%s: subscribing to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
-		int ret = RBUS_ERROR_BUS_ERROR;
-		ret = rbusEvent_Subscribe(bus_handle_rbus, WEBCFG_SUBDOC_FORCE_RESET_EVENT, subdocForceReset_callbk_rbus, process_name, SUBDOC_FORCE_RESET_SUB_TIMEOUT);
-		if ((ret == RBUS_ERROR_SUCCESS) || (ret == RBUS_ERROR_SUBSCRIPTION_ALREADY_EXIST)) {
-			WbInfo(("%s: subscribed to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
-		}
-		else {
-			WbError(("%s: Unable to subscribe to event %s with rbus error code : %d\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT, ret));
-		}
-		WbInfo(("%s: job done\n", __FUNCTION__));
+	WbInfo(("%s: subscribing to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
+	int ret = RBUS_ERROR_BUS_ERROR;
+	ret = rbusEvent_Subscribe(bus_handle_rbus, WEBCFG_SUBDOC_FORCE_RESET_EVENT, subdocForceReset_callbk_rbus, process_name, SUBDOC_FORCE_RESET_SUB_TIMEOUT);
+	if ((ret == RBUS_ERROR_SUCCESS) || (ret == RBUS_ERROR_SUBSCRIPTION_ALREADY_EXIST)) {
+		WbInfo(("%s: subscribed to event %s \n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT));
 	}
 	else {
-		WbError(("RBUS disabled. Unable to subscribe to event %s\n", WEBCFG_SUBDOC_FORCE_RESET_EVENT));
-
+		WbError(("%s: Unable to subscribe to event %s with rbus error code : %d\n", __FUNCTION__, WEBCFG_SUBDOC_FORCE_RESET_EVENT, ret));
 	}
+	WbInfo(("%s: job done\n", __FUNCTION__));
+
 	return arg;
 }
 
@@ -350,36 +328,11 @@ void*  event_subscribe_bcast(void* arg)
 void eventRegisterSlave()
 {
   	WbInfo(("Entering %s\n", __FUNCTION__));
-  	if ( 1 == isWebCfgRbusEnabled() )
-  	{
-      		// creating thread to register to broadcast event 
 
-      		pthread_t bcast_regtid;
-      		pthread_create(&bcast_regtid, NULL, event_subscribe_bcast,NULL);
-  	}
-  	else
-  	{
+    // creating thread to register to broadcast event 
 
-        	#if defined(CCSP_SUPPORT_ENABLED)
-            int ret = 0;
-          	CcspBaseIf_SetCallback2(bus_handle, BROADCASTSIGNAL_NAME,
-                     	multiCompBroadCastSignal_callbk, NULL);
-
-          	ret = CcspBaseIf_Register_Event(bus_handle, NULL, BROADCASTSIGNAL_NAME);
-              	if (ret != CCSP_Message_Bus_OK) {
-               	WbError(("multiCompBroadCastSignal reg unsuccessfull\n"));
-             	} 
-          	else 
-          	{
-                 	WbInfo(("multiCompBroadCastSignal Registration with CCSP Bus successful\n"));
-          	}
-              	CcspBaseIf_SetCallback2(bus_handle, SLAVE_COMP_SIGNAL_NAME,
-                	multiCompSlaveProcessSignal_callbk, NULL);
-        	#else
-              	WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
-        	#endif
-  	}
-
+    pthread_t bcast_regtid;
+    pthread_create(&bcast_regtid, NULL, event_subscribe_bcast,NULL);
 }
 
 /*************************************************************************************************************************************
@@ -401,28 +354,15 @@ void eventRegisterMaster()
 
 	int ret = 0;
   	WbInfo(("%s for process  %s \n", __FUNCTION__, process_name));
-    if ( 1 == isWebCfgRbusEnabled() )
-  	{
-          	/***
-           	* Register data elements with rbus for EVENTS.
-           	*/
-          	ret = rbus_regDataElements(bus_handle_rbus, 1, dataElements_broadcast);
-          	if(ret != RBUS_ERROR_SUCCESS)
-          	{
-              		WbError(("Failed to register multiCompBroadCastSignal data elements with rbus. Error code : %d\n", ret));
-          	}   
 
-  	}
-  	else
-  	{
-        	#if defined(CCSP_SUPPORT_ENABLED)
-
-          	CcspBaseIf_SetCallback2(bus_handle, MASTER_COMP_SIGNAL_NAME,
-                	multiCompMasterProcessSignal_callbk, NULL);
-        	#else
-              	WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
-        	#endif
-  	}
+    /***
+    * Register data elements with rbus for EVENTS.
+    */
+    ret = rbus_regDataElements(bus_handle_rbus, 1, dataElements_broadcast);
+    if(ret != RBUS_ERROR_SUCCESS)
+    {
+        WbError(("Failed to register multiCompBroadCastSignal data elements with rbus. Error code : %d\n", ret));
+    }
 }
 
 /*************************************************************************************************************************************
@@ -443,47 +383,28 @@ void eventRegisterMaster()
 
 void sendDataToEvent(char* event_name , char* eventData)
 {
-	 WbInfo(("%s : Event name is %s Data is %s , gRbusEnabled is %d\n", __FUNCTION__,event_name,eventData,gRbusEnabled));
-    	if ( gRbusEnabled == 1 )
-    	{
-            	rbusEvent_t event;
-            	rbusObject_t data;
-        	rbusValue_t value;
-            	rbusError_t ret = RBUS_ERROR_SUCCESS;
+	 WbInfo(("%s : Event name is %s Data is %s\n", __FUNCTION__,event_name,eventData));
 
-            	rbusValue_Init(&value);
-            	rbusValue_SetString(value, eventData);
-            	rbusObject_Init(&data, NULL);
-            	rbusObject_SetValue(data, event_name, value);
+     rbusEvent_t event;
+     rbusObject_t data;
+     rbusValue_t value;
+     rbusError_t ret = RBUS_ERROR_SUCCESS;
 
-            	event.name = event_name;
-            	event.data = data;
-            	event.type = RBUS_EVENT_GENERAL;
-            	ret = rbusEvent_Publish(bus_handle_rbus, &event);
-            	if(ret != RBUS_ERROR_SUCCESS) {
-                	WbInfo(("rbusEvent_Publish Event1 failed: %d\n", ret));
-            	}
+     rbusValue_Init(&value);
+     rbusValue_SetString(value, eventData);
+     rbusObject_Init(&data, NULL);
+     rbusObject_SetValue(data, event_name, value);
 
-            	rbusValue_Release(value);
-            	WbInfo(("%s --out\n", __FUNCTION__));
-    	}
-    	else
-    	{
-        	#if defined(CCSP_SUPPORT_ENABLED)
-            	WbInfo(("%s : calling CcspBaseIf_SendSignal_WithData,event_name is %s\n", __FUNCTION__,event_name));
-                int ret = 0;
+     event.name = event_name;
+     event.data = data;
+     event.type = RBUS_EVENT_GENERAL;
+     ret = rbusEvent_Publish(bus_handle_rbus, &event);
+     if(ret != RBUS_ERROR_SUCCESS) {
+          WbInfo(("rbusEvent_Publish Event1 failed: %d\n", ret));
+     }
 
-            	ret = CcspBaseIf_SendSignal_WithData(bus_handle,event_name,eventData);
-
-            	if ( ret != CCSP_SUCCESS )
-            	{
-                 	WbError(("%s : %s event failed,  ret value is %d\n",__FUNCTION__,event_name,ret));
-            	}
-            	WbInfo(("%s : return value is %d \n", __FUNCTION__,ret));
-        	#else
-              	WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
-        	#endif
-          }
+     rbusValue_Release(value);
+     WbInfo(("%s --out\n", __FUNCTION__));
 }
 
 /*************************************************************************************************************************************
@@ -504,40 +425,20 @@ void EventRegister(char* EventName)
 
 	WbInfo(("%s : event name is %s\n", __FUNCTION__,EventName));
 
-    	int ret = 0 ;
-    	if (gRbusEnabled == 1 )
-    	{
-        	/***
-            	* Register data elements with rbus for EVENTS.
-            	*/            
-            	if ( strncmp(EventName,SLAVE_COMP_SIGNAL_NAME,strlen(SLAVE_COMP_SIGNAL_NAME)) == 0 )
-            	{
-               		ret = rbus_regDataElements(bus_handle_rbus, 1, dataElements_slave);
-            	}
-            	else if ( strncmp(EventName,MASTER_COMP_SIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
-            	{
-                	ret = rbus_regDataElements(bus_handle_rbus, 1, dataElements_master);
-            	}
-    	}
-    	else
-    	{
-        	#if defined(CCSP_SUPPORT_ENABLED)
-            	ret = CcspBaseIf_Register_Event(bus_handle, NULL, EventName );
-            	if (ret != CCSP_Message_Bus_OK) {
-                    WbError(("%s reg unsuccessfull\n",EventName));
-                    return ;
-            	} 
-		else {
-                    WbInfo(("%s registration with CCSP Bus successful\n",EventName));
-            	}
+    int ret = 0 ;
+    /***
+    * Register data elements with rbus for EVENTS.
+    */            
+    if ( strncmp(EventName,SLAVE_COMP_SIGNAL_NAME,strlen(SLAVE_COMP_SIGNAL_NAME)) == 0 )
+    {
+        ret = rbus_regDataElements(bus_handle_rbus, 1, dataElements_slave);
+    }
+    else if ( strncmp(EventName,MASTER_COMP_SIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
+    {
+        ret = rbus_regDataElements(bus_handle_rbus, 1, dataElements_master);
+    }
 
-            	WbInfo(("%s : return value is %d \n", __FUNCTION__,ret));
-        	#else
-              	WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
-        	#endif
-    	}
-        WbInfo(("Exiting from %s and return value is %d\n", __FUNCTION__,ret));
-	return;
+    WbInfo(("Exiting from %s and return value is %d\n", __FUNCTION__,ret));
 }
 
 /*************************************************************************************************************************************
@@ -555,21 +456,14 @@ void EventRegister(char* EventName)
 
 void UnSubscribeFromEvent(char* EventName)
 {
-	if (gRbusEnabled == 1 )
-    	{
-        	WbInfo(("%s : event name is %s\n", __FUNCTION__,EventName));
-        	int ret = 0 ;
-          	ret = rbusEvent_Unsubscribe(bus_handle_rbus, EventName);
-          	if ( ret != RBUS_ERROR_SUCCESS )
-          	{
-              		WbError(("%s Unsubscribe failed\n",EventName));
-              		return ;
-          	} 
-          	else 
-		{
-              		WbInfo(("%s Unsubscribe with rbus successful\n",EventName));
-          	}
-    	}
+    int ret = 0 ;
+
+    WbInfo(("%s : event name is %s\n", __FUNCTION__,EventName));
+    ret = rbusEvent_Unsubscribe(bus_handle_rbus, EventName);
+    if ( ret != RBUS_ERROR_SUCCESS )
+    {
+        WbError(("%s Unsubscribe failed\n",EventName));
+    }
 }
 /*************************************************************************************************************************************
 
@@ -587,39 +481,20 @@ void UnSubscribeFromEvent(char* EventName)
 void UnregisterFromEvent(char* EventName)
 {
 	WbInfo(("%s : event name is %s\n", __FUNCTION__,EventName));
-    	int ret = 0 ;
-        if ( gRbusEnabled == 1 )
-        {
-            	if ( strncmp(EventName,SLAVE_COMP_SIGNAL_NAME,strlen(SLAVE_COMP_SIGNAL_NAME)) == 0 )
-                {
-                        ret = rbus_unregDataElements(bus_handle_rbus, 1, dataElements_slave);
-                        gMasterSubscribed = 0;
+    int ret = 0;
 
-                }
-                else if ( strncmp(EventName,MASTER_COMP_SIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
-                {
-                        ret = rbus_unregDataElements(bus_handle_rbus, 1, dataElements_master);
-                        gSlaveSubscribed = 0;
+    if ( strncmp(EventName,SLAVE_COMP_SIGNAL_NAME,strlen(SLAVE_COMP_SIGNAL_NAME)) == 0 )
+    {
+        ret = rbus_unregDataElements(bus_handle_rbus, 1, dataElements_slave);
+        gMasterSubscribed = 0;
+    }
+    else if ( strncmp(EventName,MASTER_COMP_SIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
+    {
+        ret = rbus_unregDataElements(bus_handle_rbus, 1, dataElements_master);
+        gSlaveSubscribed = 0;
+    }
 
-                }
-         }
-         else
-         {
-         	#if defined(CCSP_SUPPORT_ENABLED)
-                ret = CcspBaseIf_UnRegister_Event(bus_handle, NULL, EventName);
-                if (ret != CCSP_Message_Bus_OK) {
-               		WbError(("%s unreg failed\n",EventName));
-                    	return ;
-                }else {
-                    	WbInfo(("%s UnRegistration with CCSP Bus successful\n",EventName));
-                }
-              	#else
-                WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
-              	#endif
-          }
-
-          WbInfo(("Exiting from %s and return value is %d\n", __FUNCTION__,ret));
-    	return ;
+    WbInfo(("Exiting from %s and return value is %d\n", __FUNCTION__,ret));
 }
 
 /*************************************************************************************************************************************
@@ -637,33 +512,32 @@ void UnregisterFromEvent(char* EventName)
 
 int subscribeToEvent(char* EventName)
 {
-    	int ret = RBUS_ERROR_SUCCESS ;
-    	WbInfo(("%s : event name is %s\n", __FUNCTION__,EventName));
-    	if ( gRbusEnabled == 1 )
-    	{
+    char user_data[64] = {0};
+    int ret = RBUS_ERROR_SUCCESS;
 
-        	char user_data[64] = {0};
-        	if ( strncmp(EventName,SLAVE_COMP_SIGNAL_NAME,strlen(SLAVE_COMP_SIGNAL_NAME)) == 0 )
-        	{
-            		strncpy(user_data,"slaveSignal",sizeof(user_data)-1);
-        	}
-        	else if ( strncmp(EventName,MASTER_COMP_SIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
-        	{       
-            		strncpy(user_data,"masterSignal",sizeof(user_data)-1);
-        	}
-        	else if ( strncmp(EventName,BROADCASTSIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
-        	{       
-            		strncpy(user_data,"broadcastSignal",sizeof(user_data)-1);
-        	}
+    WbInfo(("%s : event name is %s\n", __FUNCTION__,EventName));
 
-        	ret = rbusEvent_Subscribe(bus_handle_rbus, EventName, multiComp_callbk_rbus, user_data, 60);
-        	if(ret != RBUS_ERROR_SUCCESS) {
-            		WbError(("Unable to subscribe to event %s with rbus error code : %d\n", EventName, ret));
-                    return -1;
-        	} 
-        
-        	WbInfo(("%s : subscribe to %s ret value is %d\n", __FUNCTION__,EventName,ret));
-    	}
+    if ( strncmp(EventName,SLAVE_COMP_SIGNAL_NAME,strlen(SLAVE_COMP_SIGNAL_NAME)) == 0 )
+    {
+        strncpy(user_data,"slaveSignal",sizeof(user_data)-1);
+    }
+    else if ( strncmp(EventName,MASTER_COMP_SIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
+    {       
+        strncpy(user_data,"masterSignal",sizeof(user_data)-1);
+    }
+    else if ( strncmp(EventName,BROADCASTSIGNAL_NAME,strlen(MASTER_COMP_SIGNAL_NAME)) == 0 )
+    {       
+        strncpy(user_data,"broadcastSignal",sizeof(user_data)-1);
+    }
+
+    ret = rbusEvent_Subscribe(bus_handle_rbus, EventName, multiComp_callbk_rbus, user_data, 60);
+    if(ret != RBUS_ERROR_SUCCESS) {
+        WbError(("Unable to subscribe to event %s with rbus error code : %d\n", EventName, ret));
+        return -1;
+    }
+
+    WbInfo(("%s : subscribe to %s ret value is %d\n", __FUNCTION__,EventName,ret));
+
    	return 0;   
 }
 
@@ -684,48 +558,34 @@ int subscribeToEvent(char* EventName)
 void sendWebConfigSignal(char* data)
 {
 	int ret = -1 ;
-        if ( 1 == isWebCfgRbusEnabled() )
-      	{
-		#ifndef WEBCONFIG_BIN_SUPPORT
-        	rbusMessage request, response;
-          	rbusMessage_Init(&request);
-          	rbusMessage_SetString(request,data);
-          	WbInfo(("%s : rbus_publishEvent :: event_name : %s :: \n", __FUNCTION__, "webconfigSignal"));
-          	if(( ret = rbus_invokeRemoteMethod("eRT.com.cisco.spvtg.ccsp.webpaagent", "webconfigSignal", request, 6000, &response)) != RBUSCORE_SUCCESS )
-         	{
-              		WbError(("%s rbus_invokeRemoteMethod for webconfigSignal failed & returns with Err: %d\n", __FUNCTION__, ret));
-          	}
-          	else
-          	{
-              		rbusMessage_Release(response);
-          	}
-		#else
-		WbInfo(("%s : rbus_set :: event_name : %s :: \n", __FUNCTION__, "webconfigSignal"));
-		bool isCommit = true;
-		int sessionId = 0;
-		rbusValue_t setVal;
-		rbusValue_Init(&setVal);
-		rbusValue_SetFromString(setVal, RBUS_STRING, data);
 
-		rbusSetOptions_t opts = {isCommit,sessionId};
-		ret = rbus_set(bus_handle_rbus, "webconfigSignal", setVal, &opts);
-		if(RBUS_ERROR_SUCCESS != ret)
-		{
-			WbError(("%s rbus_set for webconfigSignal failed & returns with Err: %d\n", __FUNCTION__, ret));
-		}
-		rbusValue_Release(setVal);
-		#endif
-        }
-        else
-        {
-            	#if defined(CCSP_SUPPORT_ENABLED)
-                ret =  CcspBaseIf_WebConfigSignal(bus_handle, data);
+#ifndef WEBCONFIG_BIN_SUPPORT
+    rbusMessage request, response;
+    rbusMessage_Init(&request);
+    rbusMessage_SetString(request,data);
+    WbInfo(("%s : rbus_publishEvent :: event_name : %s :: \n", __FUNCTION__, "webconfigSignal"));
+    if(( ret = rbus_invokeRemoteMethod("eRT.com.cisco.spvtg.ccsp.webpaagent", "webconfigSignal", request, 6000, &response)) != RBUSCORE_SUCCESS )
+    {
+        WbError(("%s rbus_invokeRemoteMethod for webconfigSignal failed & returns with Err: %d\n", __FUNCTION__, ret));
+    }
+    else
+    {
+        rbusMessage_Release(response);
+    }
+#else
+    WbInfo(("%s : rbus_set :: event_name : %s :: \n", __FUNCTION__, "webconfigSignal"));
+    bool isCommit = true;
+    int sessionId = 0;
+    rbusValue_t setVal;
+    rbusValue_Init(&setVal);
+    rbusValue_SetFromString(setVal, RBUS_STRING, data);
 
-                if ( ret != CCSP_SUCCESS )
-                    WbError(("%s : CcspBaseIf_WebConfigSignal failed,  ret value is %d\n",__FUNCTION__,ret));
-            	#else
-                WbError(("%s : CCSP_SUPPORT_NOT_ENABLED\n",__FUNCTION__ ));
-            	#endif
-        }
-    	return ;
+    rbusSetOptions_t opts = {isCommit,sessionId};
+    ret = rbus_set(bus_handle_rbus, "webconfigSignal", setVal, &opts);
+    if(RBUS_ERROR_SUCCESS != ret)
+    {
+        WbError(("%s rbus_set for webconfigSignal failed & returns with Err: %d\n", __FUNCTION__, ret));
+    }
+    rbusValue_Release(setVal);
+#endif
 }
