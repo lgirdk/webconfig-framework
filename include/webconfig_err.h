@@ -47,6 +47,9 @@
 #define INVALID_VLANID_RANGE                    320
 #define BLOB_EXEC_FAILURE                       321
 
+#if defined (SPEED_BOOST_SUPPORTED)
+#define OVERLAPPING_SPEEDBOOST_PORT             322
+#endif
 
 #define SYSCFG_FAILURE            	    	601
 #define SYSEVENT_FAILURE            		602
