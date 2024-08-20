@@ -988,8 +988,10 @@ void* messageQueueProcessing()
 		           			WbError(("%s: subdoc %s , txid %hu , version %u execution timedout\n", __FUNCTION__,exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version));
 
 						updateVersionAndState(exec_data->version,0,blobDataProcessing);
-			            		send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,BLOB_EXECUTION_TIMEDOUT,"Blob Execution Timedout");
-						
+                                                if(exec_data->disableWebCfgNotification != 1)
+                                                {
+			            		        send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,BLOB_EXECUTION_TIMEDOUT,"Blob Execution Timedout");
+                                                }
 			            		if ( exec_data->rollbackFunc )
 						{
 							rollbkRet = exec_data->rollbackFunc();
@@ -1008,14 +1010,20 @@ void* messageQueueProcessing()
 			        		{
 							WbInfo(("%s : Execution success , sending completed ACK\n",__FUNCTION__));
 							updateVersionAndState(exec_data->version,execReturn->ErrorCode,blobDataProcessing);
-							send_ACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,0,execReturn->ErrorMsg);
+                                                        if(exec_data->disableWebCfgNotification != 1)
+                                                        {
+							        send_ACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,0,execReturn->ErrorMsg);
+                                                        }
 				        	}
 				        	else
 						{
 							WbError(("%s : Execution failed Error Code :%hu Reason: %s \n",__FUNCTION__,execReturn->ErrorCode,execReturn->ErrorMsg));
 							updateVersionAndState(exec_data->version,execReturn->ErrorCode,blobDataProcessing);
-							send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,execReturn->ErrorCode,execReturn->ErrorMsg);
-			                if ( (exec_data->rollbackFunc) && ( VALIDATION_FALIED != execReturn->ErrorCode ) )
+                                                        if(exec_data->disableWebCfgNotification != 1)
+                                                        {
+							        send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,execReturn->ErrorCode,execReturn->ErrorMsg);
+                                                        }
+			                                if ( (exec_data->rollbackFunc) && ( VALIDATION_FALIED != execReturn->ErrorCode ) )
                                                		{	
 								rollbkRet = exec_data->rollbackFunc();
 
@@ -1038,15 +1046,21 @@ void* messageQueueProcessing()
 				        {
 						WbInfo(("%s : Execution success , sending completed ACK\n",__FUNCTION__));
 						updateVersionAndState(exec_data->version,execReturn->ErrorCode,blobDataProcessing);
-						send_ACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,0,execReturn->ErrorMsg);
+                                                if(exec_data->disableWebCfgNotification != 1)
+                                                {
+						        send_ACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,0,execReturn->ErrorMsg);
+                                                }
 				        }
 				        else
 					{
 
 						WbError(("%s : Execution failed Error Code :%hu Reason: %s \n",__FUNCTION__,execReturn->ErrorCode,execReturn->ErrorMsg));
 						updateVersionAndState(exec_data->version,execReturn->ErrorCode,blobDataProcessing);
-						send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,execReturn->ErrorCode,execReturn->ErrorMsg);
-                        if ( (exec_data->rollbackFunc) && ( VALIDATION_FALIED != execReturn->ErrorCode ) )
+                                                if(exec_data->disableWebCfgNotification != 1)
+                                                {
+						        send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,execReturn->ErrorCode,execReturn->ErrorMsg);
+                                                }
+                                                if ( (exec_data->rollbackFunc) && ( VALIDATION_FALIED != execReturn->ErrorCode ) )
                                        		{
 							rollbkRet = exec_data->rollbackFunc();
 
@@ -1061,8 +1075,10 @@ void* messageQueueProcessing()
 			{	
 				WbError(("%s executeBlobRequest function pointer is NULL , Send NACK\n",__FUNCTION__));
 				updateVersionAndState(exec_data->version,execReturn->ErrorCode,blobDataProcessing);
-				send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,NULL_BLOB_EXEC_POINTER,"Null Execution Pointer passed");
-
+                                if(exec_data->disableWebCfgNotification != 1)
+                                {
+				        send_NACK(exec_data->subdoc_name,queueData.txid_queue[queueData.front],exec_data->version,NULL_BLOB_EXEC_POINTER,"Null Execution Pointer passed");
+                                }
 			}
 
 
@@ -1077,8 +1093,7 @@ void* messageQueueProcessing()
 
 				removeEntryFromQueue();
 
-		    	pthread_mutex_unlock(&webconfig_exec);
-	 
+		    	        pthread_mutex_unlock(&webconfig_exec);
 	    	}    	
    	}
 	return NULL;
@@ -1407,12 +1422,12 @@ void PushBlobRequest (execData *exec_data )
         	if ( (mqd_t)-1 == mq )
     		{
     			WbError(("%s message queue open failed , ERROR : %s\n",__FUNCTION__,strerror(errno)));
-			send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,MQUEUE_OPEN_FAILED,"MQ OPEN FAILED");  
+                        if(exec_data->disableWebCfgNotification != 1)
+                        {
+			        send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,MQUEUE_OPEN_FAILED,"MQ OPEN FAILED");
+                        }
 	  		
-               goto EXIT;
-
-
-
+                        goto EXIT;
     		}
 
 		if (!exec_data->calcTimeout)
@@ -1439,16 +1454,22 @@ void PushBlobRequest (execData *exec_data )
 				WbInfo(("Num of events in queue are %lu\n",attr.mq_curmsgs));
 	     		}
 
-			#endif		
+			#endif
+                        if(exec_data->disableWebCfgNotification != 1)
+                        {	
 	
-			WbInfo(("%s : Send received request ACK , timeout is %lu\n",__FUNCTION__,timeout_to_webconfig));
+			        WbInfo(("%s : Send received request ACK , timeout is %lu\n",__FUNCTION__,timeout_to_webconfig));
 
-			send_ACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,timeout_to_webconfig,"");
+			        send_ACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,timeout_to_webconfig,"");
+                        }
 			
             		if ( 0 != mq_send(mq, (char*) exec_data, sizeof(*exec_data), 0))
                         {
                  		WbError(("%s message queue send failed , ERROR is : %s\n",__FUNCTION__,strerror(errno)));
-                		send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,MQUEUE_SEND_FAILED,"MQ SEND FAILED");
+                                if(exec_data->disableWebCfgNotification != 1)
+                                {
+                		        send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,MQUEUE_SEND_FAILED,"MQ SEND FAILED");
+                                }
                  		removeEntryfromRearEnd();
                  		if ((0 != mq_close(mq)))
             				WbError(("%s message queue close failed , ERROR is : %s\n",__FUNCTION__,strerror(errno)));
@@ -1466,8 +1487,10 @@ void PushBlobRequest (execData *exec_data )
 		else
 		{
 			WbError(("%s QUEUE FULL\n",__FUNCTION__));
-
-			send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,QUEUE_PUSH_FAILED,"Queue is Full");			
+                        if(exec_data->disableWebCfgNotification != 1)
+                        {
+			        send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,QUEUE_PUSH_FAILED,"Queue is Full");
+                        }
 		}
 
 		if ((0 != mq_close(mq)))
@@ -1495,23 +1518,30 @@ void PushBlobRequest (execData *exec_data )
 		WbInfo(("%s timeout received from calcTimeout is %lu\n",__FUNCTION__,timeout));
 
 	   	timeout_to_webconfig = timeout + (getPendingQueueTimeout(exec_data->txid));
+                if(exec_data->disableWebCfgNotification != 1)
+                {
+		        WbInfo(("%s : Send received request ACK , timeout is %lu\n",__FUNCTION__,timeout_to_webconfig));
 
-		WbInfo(("%s : Send received request ACK , timeout is %lu\n",__FUNCTION__,timeout_to_webconfig));
-
-		send_ACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,timeout_to_webconfig,"");
+		        send_ACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,timeout_to_webconfig,"");
+                }
 
 	}
 	else if ( VERSION_ALREADY_EXIST == retVal )
 	{
 		WbInfo(("Already having updated version, no need to prcess Blob request\n"));
-		send_ACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,0,"");
-
+                if(exec_data->disableWebCfgNotification != 1)
+                {
+		        send_ACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,0,"");
+                }
 	}
 
 	else if ( SUBDOC_NOT_SUPPORTED == retVal )
 	{
 		WbError(("Subdoc not registered , support not available . sending NACK\n"));
-		send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,SUBDOC_NOT_SUPPORTED,"INVALID SUBDOC");
+                if(exec_data->disableWebCfgNotification != 1)
+                {
+		        send_NACK(exec_data->subdoc_name,exec_data->txid,exec_data->version,SUBDOC_NOT_SUPPORTED,"INVALID SUBDOC");
+                }
 	}
 
 EXIT : 

@@ -288,6 +288,8 @@ policySequence
 
  * freeResources  (void *)					->  This function pointer expects a handler from component to free the resources
 
+ * int disableWebCfgNotification                               -> This flag is used to disable webconfig notification when blob applied locally 
+
 
 ****************************************************************************************************************************************************/
 
@@ -304,7 +306,7 @@ _execData
 	int (*rollbackFunc) (); 
 	void (*freeResources) (void *);	
 	int multiCompRequest;
-
+        int disableWebCfgNotification;
 } execData; 
 
 
